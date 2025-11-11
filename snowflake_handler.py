@@ -3,6 +3,7 @@ import os
 from pathlib import Path
 import snowflake.connector
 from typing import Dict
+import logging
 
 class SnowflakeHandler:
     def __init__(self,
@@ -28,6 +29,7 @@ class SnowflakeHandler:
         try:
             with open(env_path, 'r') as f:
                 target_config = json.load(f)
+                logging.info("Snowflake configs were loaded.")
         except FileNotFoundError:
             raise FileNotFoundError(f"Snowflake config file not found: {env_path}")
         except json.JSONDecodeError:
@@ -57,10 +59,14 @@ class SnowflakeHandler:
                 role=self.sf_options['sfRole']
             )
             
+            if not self.conn:
+                logging.error("Not yet connected.")
+                raise NotImplementedError
+            
             # Simple test query
             with self.conn.cursor() as cur:
                 cur.execute("SELECT CURRENT_VERSION()")
-                print("Connected to Snowflake:", cur.fetchone()[0])
+                logging.info("Connected to Snowflake:", cur.fetchone()[0])
 
     def validate_connection(self):
         """Validate that all required parameters are present"""
@@ -78,10 +84,12 @@ class SnowflakeHandler:
         if missing_params:
             raise ValueError(f"Missing required parameters: {', '.join(missing_params)}")
 
+        logging.info("All required parameters were given.")
         return True
 
     def close(self):
         """Close Snowflake connection"""
         if self.conn:
             self.conn.close()
+            logging.info("Snowflake connection closed.")
             self.conn = None
