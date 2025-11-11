@@ -4,6 +4,7 @@ from pathlib import Path
 import snowflake.connector
 from typing import Dict
 import logging
+from cryptography.hazmat.primitives import serialization
 
 class SnowflakeHandler:
     def __init__(self,
@@ -39,7 +40,8 @@ class SnowflakeHandler:
         return {
             "sfAccount": os.getenv('SNOWFLAKE_ACCOUNT', target_config['account']),
             "sfUser": os.getenv('SNOWFLAKE_USER', target_config['user']),
-            "sfPassword": os.getenv('SNOWFLAKE_PASSWORD', target_config['password']),
+            "sfprivate_key_path": os.getenv('SNOWFLAKE_PRIVATE_KEY_PATH', target_config['private_key_path']),
+            "sfprivate_key_passphrase": os.getenv('SNOWFLAKE_PRIVATE_KEY_PASSPHRASE', target_config['private_key_passphrase']),
             "sfDatabase": os.getenv('SNOWFLAKE_DATABASE', target_config['database']),
             "sfSchema": os.getenv('SNOWFLAKE_SCHEMA', target_config['schema']),
             "sfWarehouse": os.getenv('SNOWFLAKE_WAREHOUSE', target_config['warehouse']),
@@ -48,10 +50,16 @@ class SnowflakeHandler:
 
     def connect(self):
         """Establish Snowflake connection"""
+        
+        with open(self.sf_options['sfprivate_key_path'], "rb") as key:
+            p_key = serialization.load_pem_private_key(
+                key.read(),
+                password=self.sf_options['sfprivate_key_passphrase'].encode()
+            )
         if not self.conn:
             self.conn = snowflake.connector.connect(
                 user=self.sf_options['sfUser'],
-                password=self.sf_options['sfPassword'],
+                private_key=p_key,
                 account=self.sf_options['sfAccount'],
                 warehouse=self.sf_options['sfWarehouse'],
                 database=self.sf_options['sfDatabase'],
