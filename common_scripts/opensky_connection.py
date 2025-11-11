@@ -44,7 +44,7 @@ def get_access_token(file_path):
         logging.error(f"Error requesting token: {e}")
         raise e
     
-def make_OpenSky_request(API_BASE_URL, endpoint, param, airport_or_icao24_value, begin_ts, end_ts, token):
+def make_OpenSky_request(API_BASE_URL, endpoint, airport_icao, begin_ts, end_ts, token):
     """Makes an API request using the Bearer Token."""
     if not token:
         logging.error("Error: No valid token available.")
@@ -53,21 +53,14 @@ def make_OpenSky_request(API_BASE_URL, endpoint, param, airport_or_icao24_value,
     url = f"{API_BASE_URL}{endpoint}"
     logging.info(f"\nMaking API request to {url}...")
     
-    # As this function works for two REST API endpoints, depending on the param provided the params were selected  
-    if param == "airport":
-        params = {
-            "airport": airport_or_icao24_value,
-            "begin": begin_ts,
-            "end": end_ts
-        }
-    else:
-        params = {
-            "icao24": airport_or_icao24_value,
-            "begin": begin_ts,
-            "end": end_ts
-        }
+  
+    params = {
+        "airport": airport_icao,
+        "begin": begin_ts,
+        "end": end_ts
+    }
     
-    logging.info(f"Param:'{param}' is selected, therefore params: {params}")
+    logging.info(f"params: {params}")
     
     headers = {
         "Authorization": f"Bearer {token}"
