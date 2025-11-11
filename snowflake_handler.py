@@ -19,7 +19,6 @@ class SnowflakeHandler:
         self.file_name = file_name
         self.conn = None
         self.sf_options = self._load_config()
-        # self.spark = create_spark_session()
 
     def _load_config(self) -> Dict[str, str]:
         """Load configuration from credential files"""
