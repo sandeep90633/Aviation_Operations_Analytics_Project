@@ -69,7 +69,7 @@ class SnowflakeHandler:
             
             if not self.conn:
                 logging.error("Not yet connected.")
-                raise NotImplementedError
+                raise NotImplementedError("Not connected but tried to connect.")
             
             # Simple test query
             with self.conn.cursor() as cur:

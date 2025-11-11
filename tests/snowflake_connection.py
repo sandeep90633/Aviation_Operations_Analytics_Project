@@ -26,7 +26,7 @@ def load_airports_data(file_path: str) -> list:
                 next(data) 
             except StopIteration:
                 logger.error(f"File {file_path} is empty after opening.")
-                raise "FileEmptyError"
+                raise ValueError("File is empty.")
             
             for line in data:
                 airports.append(tuple(line))
@@ -36,10 +36,10 @@ def load_airports_data(file_path: str) -> list:
 
     except FileNotFoundError:
         logger.error(f"Error: CSV file not found at path: {file_path}")
-        return []
+        raise FileNotFoundError("File not found")
     except Exception as e:
-        logger.critical(f"An unexpected error occurred during file reading: {e}")
-        return []
+        logger.error(f"An unexpected error occurred during file reading: {e}")
+        raise Exception
 
 def main():
     
@@ -88,18 +88,15 @@ def main():
 
         cursor.executemany(insert_sql, airport_data)
 
-        logger.info("Connection successful and data ready for insertion.")
+        logger.info("Airport data ingestion process finished.")
 
     except Exception as e:
         logger.critical(f"Failed during Snowflake connection or handling: {e}")
-        
+        raise Exception
     finally:
         
         if snowflake_handler.conn:
             snowflake_handler.close()
-            logger.info("Snowflake connection closed.")
-        
-    #logger.info("Airport data ingestion process finished.")
 
 if __name__ == "__main__":
     main()

@@ -5,6 +5,7 @@ import sys, os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from utils.json_reader import json_reader
+from common_scripts.date_ranges import date_string_to_day_range_epoch
 
 AUTH_URL = "https://auth.opensky-network.org/auth/realms/opensky-network/protocol/openid-connect/token"
 
@@ -44,7 +45,7 @@ def get_access_token(file_path):
         logging.error(f"Error requesting token: {e}")
         raise e
     
-def make_OpenSky_request(API_BASE_URL, endpoint, airport_icao, begin_ts, end_ts, token):
+def make_OpenSky_request(API_BASE_URL, endpoint, airport_icao, date, token):
     """Makes an API request using the Bearer Token."""
     if not token:
         logging.error("Error: No valid token available.")
@@ -53,7 +54,8 @@ def make_OpenSky_request(API_BASE_URL, endpoint, airport_icao, begin_ts, end_ts,
     url = f"{API_BASE_URL}{endpoint}"
     logging.info(f"\nMaking API request to {url}...")
     
-  
+    begin_ts, end_ts, _, _, _ = date_string_to_day_range_epoch(date)
+    
     params = {
         "airport": airport_icao,
         "begin": begin_ts,
