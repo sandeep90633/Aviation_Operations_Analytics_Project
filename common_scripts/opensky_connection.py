@@ -76,3 +76,43 @@ def make_OpenSky_request(API_BASE_URL, endpoint, airport_icao, date, token):
     except requests.exceptions.RequestException as e:
         logging.error(f"Error making API request: {e}")
         raise e
+    
+def fetch_opensky_flight_data(airports_icao, columns, opensky_cred_file, api_base_url, endpoint, date):
+    """Fetches flight data for multiple airports with retry and token refresh logic."""
+    
+    # Initialize variables
+    token = get_access_token(opensky_cred_file)
+    all_records = []
+    MAX_RETRIES = 2
+
+    for icao in airports_icao:
+        retry = 0
+        while retry < MAX_RETRIES:
+            
+            response = make_OpenSky_request(api_base_url, endpoint, icao, date, token)
+
+            if response.status_code == 200:
+                data = response.json()
+                logging.info(f"Successfully retrieved Aircraft vector records for {icao}.")
+                
+                records = [tuple(item.get(col) for col in columns) for item in data]
+                all_records.extend(records)
+                
+                retry = MAX_RETRIES # Success, break out of while loop
+
+            elif response.status_code == 401:
+                logging.warning("Token might have expired. Requesting new token...")
+                token = get_access_token(opensky_cred_file)
+                
+                retry += 1
+                
+                if retry == MAX_RETRIES:
+                    logging.error(f"Failed to refresh token after {MAX_RETRIES} attempts for {icao}.")
+                    break
+            
+            else:
+                logging.error(f"Error for {icao}. Status Code: {response.status_code}. Response: {response.text}")
+                # log the error and break the while loop to continue with other icaos
+                break 
+
+    return all_records, columns
