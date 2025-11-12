@@ -25,7 +25,7 @@ class SnowflakeHandler:
     def _load_config(self) -> Dict[str, str]:
         """Load configuration from credential files"""
         env_path = self.credentials_dir / self.file_name
-
+        logging.info(f"Loading snowflake credentials from the path: {env_path}")
         # Read profiles.yml
         try:
             with open(env_path, 'r') as f:
@@ -51,6 +51,8 @@ class SnowflakeHandler:
     def connect(self):
         """Establish Snowflake connection"""
         
+        logging.info("Connecting with snowflake with private key......")
+        
         with open(self.sf_options['sfprivate_key_path'], "rb") as key:
             p_key = serialization.load_pem_private_key(
                 key.read(),
@@ -73,7 +75,6 @@ class SnowflakeHandler:
             
             # Simple test query
             with self.conn.cursor() as cur:
-                cur.execute("SELECT CURRENT_VERSION()")
                 logging.info("Connected to Snowflake:", cur.fetchone()[0])
 
     def validate_connection(self):

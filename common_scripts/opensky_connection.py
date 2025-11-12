@@ -13,6 +13,7 @@ AUTH_URL = "https://auth.opensky-network.org/auth/realms/opensky-network/protoco
 def get_access_token(file_path):
     """Requests a new access token from the OpenSky auth server."""
     
+    logging.info("Loading OpenSky Network credentials....")
     credentials = json_reader(file_path)
     
     # OpenSky API Client Credentials
@@ -66,7 +67,7 @@ def make_OpenSky_request(API_BASE_URL, endpoint, airport_icao, date, token):
         "Authorization": f"Bearer {token}"
     }
     
-    logging.info(f"\nMaking API request to {url}...")
+    logging.info(f"Making API request to {url}...")
     logging.info(f"params: {params}")
     
     try:
@@ -98,10 +99,11 @@ def fetch_opensky_flight_data(airports_icao, columns, opensky_cred_file, api_bas
                 
                 ingestion_timestamp = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
                 
+                logging.info("Parsing the results.....")
                 records = [tuple(item.get(col) for col in columns[0:-2]) + (icao, ingestion_timestamp) for item in data]
                 
                 all_records.extend(records)
-                
+                logging.info("Results were added to global records variable.")
                 retry = MAX_RETRIES # Success, break out of while loop
 
             elif response.status_code == 401:
