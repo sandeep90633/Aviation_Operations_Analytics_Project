@@ -52,7 +52,6 @@ def make_OpenSky_request(API_BASE_URL, endpoint, airport_icao, date, token):
         raise "notValidTokenError"
         
     url = f"{API_BASE_URL}{endpoint}"
-    logging.info(f"\nMaking API request to {url}...")
     
     begin_ts, end_ts, _, _, _ = date_string_to_day_range_epoch(date)
     
@@ -62,11 +61,12 @@ def make_OpenSky_request(API_BASE_URL, endpoint, airport_icao, date, token):
         "end": end_ts
     }
     
-    logging.info(f"params: {params}")
-    
     headers = {
         "Authorization": f"Bearer {token}"
     }
+    
+    logging.info(f"\nMaking API request to {url}...")
+    logging.info(f"params: {params}")
     
     try:
         response = requests.get(url, params=params, headers=headers)
@@ -93,7 +93,7 @@ def fetch_opensky_flight_data(airports_icao, columns, opensky_cred_file, api_bas
 
             if response.status_code == 200:
                 data = response.json()
-                logging.info(f"Successfully retrieved Aircraft vector records for {icao}.")
+                logging.info(f"Successfully retrieved opensky records for {icao}.")
                 
                 records = [tuple(item.get(col) for col in columns) for item in data]
                 all_records.extend(records)
@@ -108,11 +108,16 @@ def fetch_opensky_flight_data(airports_icao, columns, opensky_cred_file, api_bas
                 
                 if retry == MAX_RETRIES:
                     logging.error(f"Failed to refresh token after {MAX_RETRIES} attempts for {icao}.")
-                    break
+                    raise Exception
+                
+            elif response.status_code == 404:
+                logging.error(f"Error for {icao}. Status Code: {response.status_code}. Response: {response.text}")
+                # log the error and break the while loop to continue with other icaos
+                break 
             
             else:
                 logging.error(f"Error for {icao}. Status Code: {response.status_code}. Response: {response.text}")
                 # log the error and break the while loop to continue with other icaos
-                break 
+                raise Exception
 
     return all_records, columns
