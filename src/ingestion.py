@@ -36,54 +36,58 @@ def main():
         'estArrivalAirport', 'callsign',
         'estDepartureAirportHorizDistance', 'estDepartureAirportVertDistance',
         'estArrivalAirportHorizDistance', 'estArrivalAirportVertDistance',
-        'departureAirportCandidatesCount', 'arrivalAirportCandidatesCount'
+        'departureAirportCandidatesCount', 'arrivalAirportCandidatesCount', 'airport_icao', 'ingestion_timestamp'
     ]
-        
-    data, columns = fetch_opensky_flight_data(airports_icao, columns, "credentials/opensky_credentials.json", API_BASE_URL, "/flights/arrival", "2025-01-02")
     
-    cursor.execute("""
-            CREATE TABLE IF NOT EXISTS flight_arrivals (
-                icao24 VARCHAR(10),
-                firstSeen BIGINT,
-                estDepartureAirport VARCHAR(10),
-                lastSeen BIGINT,
-                estArrivalAirport VARCHAR(10),
-                callsign VARCHAR(20),
-                estDepartureAirportHorizDistance INT,
-                estDepartureAirportVertDistance INT,
-                estArrivalAirportHorizDistance INT,
-                estArrivalAirportVertDistance INT,
-                departureAirportCandidatesCount INT,
-                arrivalAirportCandidatesCount INT,
-                airport_icao VARCHAR(10),
-                ingestion_timestamp VARCHAR(40)
-            )
-            """)
-        
-    logger.info("Table airports is created or existed.")
+    directions = ['departure', 'arrival']
     
-    insert_sql = """
-    INSERT INTO flight_arrivals (
-        icao24,
-        firstSeen,
-        estDepartureAirport,
-        lastSeen,
-        estArrivalAirport,
-        callsign,
-        estDepartureAirportHorizDistance,
-        estDepartureAirportVertDistance,
-        estArrivalAirportHorizDistance,
-        estArrivalAirportVertDistance,
-        departureAirportCandidatesCount,
-        arrivalAirportCandidatesCount,
-        airport_icao,
-        ingestion_timestamp
-    )
-    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-"""
-    cursor.executemany(insert_sql, data)
+    for direction in directions:
+        
+        data, columns = fetch_opensky_flight_data(airports_icao, columns, "credentials/opensky_credentials.json", API_BASE_URL, f"/flights/{direction}", "2025-01-02")
+        
+        cursor.execute(f"""
+                CREATE TABLE IF NOT EXISTS flight_{direction}s (
+                    icao24 VARCHAR(10),
+                    firstSeen BIGINT,
+                    estDepartureAirport VARCHAR(10),
+                    lastSeen BIGINT,
+                    estArrivalAirport VARCHAR(10),
+                    callsign VARCHAR(20),
+                    estDepartureAirportHorizDistance INT,
+                    estDepartureAirportVertDistance INT,
+                    estArrivalAirportHorizDistance INT,
+                    estArrivalAirportVertDistance INT,
+                    departureAirportCandidatesCount INT,
+                    arrivalAirportCandidatesCount INT,
+                    airport_icao VARCHAR(10),
+                    ingestion_timestamp VARCHAR(40)
+                )
+                """)
+            
+        logger.info(f"Table flights_{direction}s is created or existed.")
+        
+        insert_sql = f"""
+        INSERT INTO flight_{direction}s (
+            icao24,
+            firstSeen,
+            estDepartureAirport,
+            lastSeen,
+            estArrivalAirport,
+            callsign,
+            estDepartureAirportHorizDistance,
+            estDepartureAirportVertDistance,
+            estArrivalAirportHorizDistance,
+            estArrivalAirportVertDistance,
+            departureAirportCandidatesCount,
+            arrivalAirportCandidatesCount,
+            airport_icao,
+            ingestion_timestamp
+        )
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+    """
+        cursor.executemany(insert_sql, data)
 
-    logger.info("Airport data ingestion process finished.")
+        logger.info(f"'{direction}' data ingestion process finished.")
     
 if __name__ == "__main__":
     main()
