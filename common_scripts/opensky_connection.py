@@ -97,9 +97,10 @@ def fetch_opensky_flight_data(airports_icao, columns, opensky_cred_file, api_bas
                 logging.info(f"Successfully retrieved opensky records for {icao}.")
                 
                 ingestion_timestamp = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
-                columns = columns + ['airport_icao', 'ingestion_timestamp'] # icao and timestamp not in the response
+                columns = columns + ['airport_icao', 'ingestion_timestamp'] # adding icao and timestamp for downstream analysis
                 
                 records = [tuple(item.get(col) for col in columns[0:-2]) + (icao, ingestion_timestamp) for item in data]
+                
                 all_records.extend(records)
                 
                 retry = MAX_RETRIES # Success, break out of while loop
