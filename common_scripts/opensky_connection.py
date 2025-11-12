@@ -1,6 +1,7 @@
 import requests
 import logging
 import sys, os
+from datetime import datetime
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -95,7 +96,10 @@ def fetch_opensky_flight_data(airports_icao, columns, opensky_cred_file, api_bas
                 data = response.json()
                 logging.info(f"Successfully retrieved opensky records for {icao}.")
                 
-                records = [tuple(item.get(col) for col in columns) for item in data]
+                ingestion_timestamp = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+                columns = columns + ['airport_icao', 'ingestion_timestamp'] # icao and timestamp not in the response
+                
+                records = [tuple(item.get(col) for col in columns[0:-2]) + (icao, ingestion_timestamp) for item in data]
                 all_records.extend(records)
                 
                 retry = MAX_RETRIES # Success, break out of while loop

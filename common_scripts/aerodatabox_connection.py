@@ -121,13 +121,58 @@ def fetch_arrivals_departures_data(api_key_file_path, BASE_URL, airport_icao, da
                             "arrival_gate": get_value(departure, "arrival.gate"),
                             "arrival_baggagebelt": get_value(departure, "arrival.baggageBelt"),
                             "arrival_quality": get_value(departure, "arrival.quality"),
-                            "ingestion_timestamp": datetime.utcnow().isoformat(),
+                            "ingestion_timestamp": datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S"),
                             "data_source": "AeroDataBox"
                         }
                     
                     departure_records.append(departure_record)
             else:
                 logging.warn(f"No departures in the airport: {airport_icao} on date: {date}")
+                
+            if len(arrivals) > 0:
+                for arrival in arrivals:
+                    arrival_record = {
+                            "flight_number": get_value(arrival, "number"),
+                            "flight_date": date,
+                            "callsign": get_value(arrival, "callSign"),
+                            "status": get_value(arrival, "codeshareStatus"),
+                            "iscargo": get_value(arrival, "isCargo"),
+                            "aircraft_reg": get_value(arrival, "aircraft.reg"),
+                            "aircraft_modeS": get_value(arrival, "aircraft.modeS"),
+                            "aircraft_model": get_value(arrival, "aircraft.model"),
+                            "airline_name": get_value(arrival, "airline.name"),
+                            "airline_iata": get_value(arrival, "airline.iata"),
+                            "airline_icao": get_value(arrival, "airline.icao"),
+                            "airport_icao": airport_icao,
+                            "departure_airport_icao": get_value(arrival, "arrival.airport.icao"),
+                            "departure_airport_iata": get_value(arrival, "arrival.airport.iata"),
+                            "departure_airport_name": get_value(arrival, "arrival.airport.name"),
+                            "departure_airport_timezone": get_value(arrival, "arrival.airport.timeZone"),
+                            "departure_scheduledtime_utc": get_value(arrival, "departure.scheduledTime.utc"),
+                            "departure_scheduledtime_local": get_value(arrival, "departure.scheduledTime.local"),
+                            "departure_revisedtime_utc": get_value(arrival, "departure.revisedTime.utc"),
+                            "departure_revisedtime_local": get_value(arrival, "departure.revisedTime.local"),
+                            "departure_runwaytime_utc": get_value(arrival, "departure.runwayTime.utc"),
+                            "departure_runwaytime_local": get_value(arrival, "departure.runwayTime.local"),
+                            "departure_terminal": get_value(arrival, "departure.terminal"),
+                            "departure_quality": get_value(arrival, "departure.quality"),
+                            "arrival_scheduledtime_utc": get_value(arrival, "arrival.scheduledTime.utc"),
+                            "arrival_scheduledtime_local": get_value(arrival, "arrival.scheduledTime.local"),
+                            "arrival_revisedtime_utc": get_value(arrival, "arrival.revisedTime.utc"),
+                            "arrival_revisedtime_local": get_value(arrival, "arrival.revisedTime.local"),
+                            "arrival_runwaytime_utc": get_value(arrival, "arrival.runwayTime.utc"),
+                            "arrival_runwaytime_local": get_value(arrival, "arrival.runwayTime.local"),
+                            "arrival_terminal": get_value(arrival, "arrival.terminal"),
+                            "arrival_gate": get_value(arrival, "arrival.gate"),
+                            "arrival_baggagebelt": get_value(arrival, "arrival.baggageBelt"),
+                            "arrival_quality": get_value(arrival, "arrival.quality"),
+                            "ingestion_timestamp": datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S"),
+                            "data_source": "AeroDataBox"
+                        }
+                    
+                    arrival_records.append(arrival_record)
+            else:
+                logging.warn(f"No arrivals in the airport: {airport_icao} on date: {date}")   
                 
         elif response.status_code == 204:
             logging.warn(f"No content for the {airport_icao} in '{half}'.")
@@ -140,4 +185,11 @@ def fetch_arrivals_departures_data(api_key_file_path, BASE_URL, airport_icao, da
     
     departure_columns = list(departure_record.keys())
                 
-    all_departures = [tuple(item.get(col) for col in departure_columns) for item in departure_records]
+    icao_departures = [tuple(item.get(col) for col in departure_columns) for item in departure_records]
+    
+    arrival_columns = list(arrival_record.keys())
+                
+    icao_arrivals = [tuple(item.get(col) for col in arrival_columns) for item in arrival_records]
+    
+    
+    return icao_departures, icao_arrivals
