@@ -3,7 +3,7 @@ import sys, os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from common_scripts.opensky_connection import fetch_opensky_flight_data
-from common_scripts.aerodatabox_connection import fetch_arrivals_departures_data
+from common_scripts.aerodatabox_connection import fetch_aerodatabox_data
 from snowflake_handler import SnowflakeHandler
 from utils.logging import setup_logger
 

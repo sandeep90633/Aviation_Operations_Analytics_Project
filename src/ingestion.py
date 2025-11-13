@@ -4,7 +4,7 @@ import logging
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from common_scripts.opensky_connection import fetch_opensky_flight_data
-from common_scripts.aerodatabox_connection import fetch_arrivals_departures_data
+from common_scripts.aerodatabox_connection import fetch_aerodatabox_data
 
 def extract_load_opensky_data(airports_icao, columns, opensky_cred_file, OPENSKY_API_BASE_URL, date, cursor):
     
@@ -35,7 +35,7 @@ def extract_load_opensky_data(airports_icao, columns, opensky_cred_file, OPENSKY
                         departureAirportCandidatesCount INT,
                         arrivalAirportCandidatesCount INT,
                         airport_icao VARCHAR(10),
-                        ingestion_timestamp VARCHAR(40)
+                        ingestion_timestamp TIMESTAMP
                     )
                     """)
                 

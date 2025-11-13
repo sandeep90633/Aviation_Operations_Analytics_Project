@@ -88,7 +88,7 @@ def get_value(data, path, default=None):
             return default
     return data
 
-def fetch_arrivals_departures_data(api_key_file_path: str, base_url: str, endpoint: str, airport_icao: str, date: str):
+def fetch_aerodatabox_data(api_key_file_path: str, base_url: str, endpoint: str, airports_icao: list[str], date: str):
     """
     Fetch arrivals and departures data from AeroDataBox for a given airport and date.
     Returns tuples of (departures, arrivals) with column order preserved.
@@ -96,7 +96,7 @@ def fetch_arrivals_departures_data(api_key_file_path: str, base_url: str, endpoi
 
     # --- Helper functions ---
 
-    def base_flight_fields(record: dict) -> dict:
+    def base_flight_fields(record: dict, airport_icao: str) -> dict:
         """Fields shared by both arrivals and departures."""
         return {
             "flight_number": get_value(record, "number"),
@@ -111,12 +111,12 @@ def fetch_arrivals_departures_data(api_key_file_path: str, base_url: str, endpoi
             "airline_iata": get_value(record, "airline.iata"),
             "airline_icao": get_value(record, "airline.icao"),
             "airport_icao": airport_icao,
-            "ingestion_timestamp": datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S"),
+            "ingestion_timestamp": None,
             "data_source": "AeroDataBox"
         }
 
-    def parse_departure_record(dep: dict) -> dict:
-        rec = base_flight_fields(dep)
+    def parse_departure_record(dep: dict, airport_icao: str) -> dict:
+        rec = base_flight_fields(dep, airport_icao)
         rec.update({
             # Current airport = departure
             "departure_scheduledtime_utc": get_value(dep, "departure.scheduledTime.utc"),
@@ -147,8 +147,8 @@ def fetch_arrivals_departures_data(api_key_file_path: str, base_url: str, endpoi
 
         return rec
 
-    def parse_arrival_record(arr: dict) -> dict:
-        rec = base_flight_fields(arr)
+    def parse_arrival_record(arr: dict, airport_icao: str) -> dict:
+        rec = base_flight_fields(arr, airport_icao)
         rec.update({
             # Origin airport info (note: fixed path naming bug)
             "departure_airport_icao": get_value(arr, "departure.airport.icao"),
@@ -178,51 +178,54 @@ def fetch_arrivals_departures_data(api_key_file_path: str, base_url: str, endpoi
             "arrival_quality": get_value(arr, "arrival.quality")
         })
         return rec
-
-    # --- API calls in two halves ---
-    halves = [
-        ("first_half", start_str, mid_str),
-        ("second_half", mid_str, end_str)
-    ]
     
     credentials = json_reader(api_key_file_path)
     api_key = credentials['key']
     
     _, _, start_str, mid_str, end_str = date_string_to_day_range_epoch(date)
+    
+    # --- API calls in two halves ---
+    halves = [
+        ("first_half", start_str, mid_str),
+        ("second_half", mid_str, end_str)
+    ]
 
     departure_records, arrival_records = [], []
 
     for half_name, time_from, time_to in halves:
-        response = make_aerodatabox_request(api_key, base_url, endpoint, "icao", airport_icao, time_from, time_to)
         
-        if response.status_code == 200:
-            data = response.json()
-            logging.info(f"Retrieved flight data for {airport_icao} ({half_name}).")
+        for airport_icao in airports_icao:
+            response = make_aerodatabox_request(api_key, base_url, endpoint, "icao", airport_icao, time_from, time_to)
+            
+            if response.status_code == 200:
+                data = response.json()
+                logging.info(f"Retrieved flight data for {airport_icao} ({half_name}).")
 
-            departures = data.get("departures", [])
-            print(departures)
-            arrivals = data.get("arrivals", [])
+                departures = data.get("departures", [])
+                arrivals = data.get("arrivals", [])
 
-            departure_records.extend(parse_departure_record(d) for d in departures)
-            arrival_records.extend(parse_arrival_record(a) for a in arrivals)
+                departure_records.extend(parse_departure_record(d, airport_icao) for d in departures)
+                arrival_records.extend(parse_arrival_record(a, airport_icao) for a in arrivals)
 
-            if not departures:
-                logging.warning(f"No departures found for {airport_icao} ({half_name}).")
-            if not arrivals:
-                logging.warning(f"No arrivals found for {airport_icao} ({half_name}).")
+                if not departures:
+                    logging.warning(f"No departures found for {airport_icao} ({half_name}).")
+                if not arrivals:
+                    logging.warning(f"No arrivals found for {airport_icao} ({half_name}).")
 
-        elif response.status_code == 204:
-            logging.warning(f"No content for {airport_icao} in {half_name}.")
-            continue
-        else:
-            logging.error(f"AeroDataBox API error {response.status_code}: {response.text}")
-            raise RuntimeError(f"AeroDataBox API error {response.status_code}: {response.text}")
+            elif response.status_code == 204:
+                logging.warning(f"No content for {airport_icao} in {half_name}.")
+                continue
+            else:
+                logging.error(f"AeroDataBox API error {response.status_code}: {response.text}")
+                raise RuntimeError(f"AeroDataBox API error {response.status_code}: {response.text}")
 
     # Safely derive schema
     departure_columns = list(departure_records[0].keys()) if departure_records else []
     arrival_columns = list(arrival_records[0].keys()) if arrival_records else []
 
-    icao_departures = [tuple(rec.get(col) for col in departure_columns) for rec in departure_records]
-    icao_arrivals = [tuple(rec.get(col) for col in arrival_columns) for rec in arrival_records]
+    all_departures = [tuple(rec.get(col) for col in departure_columns) for rec in departure_records]
+    all_arrivals = [tuple(rec.get(col) for col in arrival_columns) for rec in arrival_records]
+    
+    logging.info("All departures and arrivals data are ready for the given airports.")
 
-    return icao_departures, icao_arrivals
+    return arrival_columns, all_departures, all_arrivals
