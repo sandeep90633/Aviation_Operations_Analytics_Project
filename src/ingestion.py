@@ -75,7 +75,7 @@ def extract_load_opensky_data(airports_icao, columns, opensky_cred_file, OPENSKY
         {'name': 'arrival', 'endpoint': '/flights/arrival', 'table': 'flight_arrivals'}
     ]
     
-    # 1. Fetch Data for both directions
+    # Fetch Data for both directions
     fetched_data = {}
     for direction in directions:
         logging.info(f"Started retrieval process for {direction['name']}...")
