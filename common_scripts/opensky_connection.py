@@ -1,7 +1,7 @@
 import requests
 import logging
 import sys, os
-from datetime import datetime
+import time
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -52,7 +52,7 @@ def make_OpenSky_request(API_BASE_URL, endpoint, airport_icao, date, token):
     if not token:
         logging.error("Error: No valid token available.")
         raise "notValidTokenError"
-        
+    
     url = f"{API_BASE_URL}{endpoint}"
     
     begin_ts, end_ts, _, _, _ = date_string_to_day_range_epoch(date)
@@ -70,14 +70,57 @@ def make_OpenSky_request(API_BASE_URL, endpoint, airport_icao, date, token):
     logging.info(f"Making API request to {url}...")
     logging.info(f"params: {params}")
     
-    try:
-        response = requests.get(url, params=params, headers=headers)
-        response.raise_for_status() 
-        return response
+    while True:
+        try:
+            response = requests.get(url, params=params, headers=headers)
+            response.raise_for_status() 
+           
+            remaining_credits = response.headers.get('X-Rate-Limit-Remaining')
+            if remaining_credits is not None:
+                logging.info(f"API Request Successful. Remaining Credits: {remaining_credits}")
+            else:
+                logging.warning("API Request Successful, but X-Rate-Limit-Remaining header was not found.")
+                
+            return response
         
-    except requests.exceptions.RequestException as e:
-        logging.error(f"Error making API request: {e}")
-        raise e
+        except requests.exceptions.HTTPError as e:
+            # Check if the error is specifically a 404 (Not Found)
+            if '404 Client Error' in str(e):
+                logging.warning(f"Resource not found (404) for '{airport_icao}' for URL: {response.url}. Skipping this request.")
+                return "icao_not_found"
+            
+            elif '429 Client Error' in str(e):
+                # Check for the X-Rate-Limit-Retry-After-Seconds header
+                retry_seconds_str = response.headers.get('X-Rate-Limit-Retry-After-Seconds')
+                
+                if retry_seconds_str:
+                    try:
+                        retry_seconds = int(retry_seconds_str)
+                        logging.warning(
+                            f"Too many requests (429) for '{airport_icao}'. "
+                            f"Pausing script for {retry_seconds} seconds as specified by the API."
+                        )
+                        time.sleep(retry_seconds)
+                    except ValueError:
+                        # Fallback if the header value isn't a valid integer
+                        default_sleep = 300 # 5 minutes default fallback
+                        logging.error(f"429 received, but Retry-After header was invalid ('{retry_seconds_str}'). Falling back to {default_sleep} seconds sleep.")
+                        time.sleep(default_sleep)
+                else:
+                    # Fallback if the header is missing entirely
+                    default_sleep = 300
+                    logging.error(f"429 received, but Retry-After header is missing. Falling back to {default_sleep} seconds sleep.")
+                    time.sleep(default_sleep)
+
+                continue #jump back to while loop
+            
+            else:
+                # Re-raise all other HTTP errors (400, 401, 500, etc.)
+                logging.error(f"Critical HTTP Error: {e}")
+                raise e   
+        except requests.exceptions.RequestException as e:
+            logging.error(f"Error making API request: {e}")
+            raise e
     
 def fetch_opensky_flight_data(airports_icao, columns, opensky_cred_file, api_base_url, endpoint, date):
     """Fetches flight data for multiple airports with retry and token refresh logic."""
@@ -92,6 +135,9 @@ def fetch_opensky_flight_data(airports_icao, columns, opensky_cred_file, api_bas
         while retry < MAX_RETRIES:
             
             response = make_OpenSky_request(api_base_url, endpoint, icao, date, token)
+            
+            if response == "icao_not_found":
+                break
 
             if response.status_code == 200:
                 data = response.json()

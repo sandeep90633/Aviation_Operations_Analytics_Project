@@ -6,7 +6,6 @@ logger = setup_logger('opensky_ingestion.log')
 
 def main():
     
-    airports_icao = ['EDDN', 'EDDF', 'EDDM', 'KJFK']
     columns = [
         'icao24', 'firstSeen', 'estDepartureAirport', 'lastSeen',
         'estArrivalAirport', 'callsign', 'estDepartureAirportHorizDistance',
@@ -19,7 +18,7 @@ def main():
     
     OPENSKY_API_BASE_URL = "https://opensky-network.org/api"
     
-    date = "2025-01-03"
+    date = "2022-01-01"
     
     snowflake_handler = SnowflakeHandler(
         credentials_dir="credentials", 
@@ -29,6 +28,18 @@ def main():
     if not snowflake_handler.conn:
         logger.info("Connecting to Snowflake...")
         snowflake_handler.connect()
+        
+    airports_icao_query = "SELECT DISTINCT icao FROM airports"
+    
+    cursor = snowflake_handler.conn.cursor()
+    
+    cursor.execute(airports_icao_query)
+
+    # Fetch all rows
+    rows = cursor.fetchall()
+
+    # Extract the ICAO codes into a simple list
+    airports_icao = [row[0] for row in rows]
     
     extract_load_opensky_data(airports_icao, columns, opensky_cred_file, OPENSKY_API_BASE_URL, date, snowflake_handler.conn)
 

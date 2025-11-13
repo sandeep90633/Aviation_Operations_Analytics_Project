@@ -186,7 +186,8 @@ def fetch_aerodatabox_data(api_key_file_path: str, base_url: str, endpoint: str,
     
     # --- API calls in two halves ---
     halves = [
-        ("first_half", start_str, mid_str)
+        ("first_half", start_str, mid_str),
+        ("second_half", mid_str, end_str)
     ]
 
     departure_records, arrival_records = [], []
