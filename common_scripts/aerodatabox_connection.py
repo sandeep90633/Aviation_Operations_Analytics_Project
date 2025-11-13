@@ -110,9 +110,9 @@ def fetch_aerodatabox_data(api_key_file_path: str, base_url: str, endpoint: str,
             "airline_name": get_value(record, "airline.name"),
             "airline_iata": get_value(record, "airline.iata"),
             "airline_icao": get_value(record, "airline.icao"),
-            "airport_icao": airport_icao,
-            "ingestion_timestamp": None,
-            "data_source": "AeroDataBox"
+            "airport_icao": airport_icao
+            #"ingestion_timestamp": None,   Will be defualt while table creation
+            #"data_source": "AeroDataBox"  Will be defualt while table creation
         }
 
     def parse_departure_record(dep: dict, airport_icao: str) -> dict:
@@ -127,7 +127,7 @@ def fetch_aerodatabox_data(api_key_file_path: str, base_url: str, endpoint: str,
             "departure_runwaytime_local": get_value(dep, "departure.runwayTime.local"),
             "departure_terminal": get_value(dep, "departure.terminal"),
             "departure_runway": get_value(dep, "departure.runway"),
-            "departure_quality": get_value(dep, "departure.quality"),
+            #"departure_quality": get_value(dep, "departure.quality"), Having problem with the list while uploading
             # Destination airport info
             "arrival_airport_icao": get_value(dep, "arrival.airport.icao"),
             "arrival_airport_iata": get_value(dep, "arrival.airport.iata"),
@@ -142,7 +142,7 @@ def fetch_aerodatabox_data(api_key_file_path: str, base_url: str, endpoint: str,
             "arrival_terminal": get_value(dep, "arrival.terminal"),
             "arrival_gate": get_value(dep, "arrival.gate"),
             "arrival_baggagebelt": get_value(dep, "arrival.baggageBelt"),
-            "arrival_quality": get_value(dep, "arrival.quality")
+            #"arrival_quality": get_value(dep, "arrival.quality")
         })
 
         return rec
@@ -163,7 +163,7 @@ def fetch_aerodatabox_data(api_key_file_path: str, base_url: str, endpoint: str,
             "departure_runwaytime_local": get_value(arr, "departure.runwayTime.local"),
             "departure_terminal": get_value(arr, "departure.terminal"),
             "departure_runway": get_value(arr, "departure.runway"),
-            "departure_quality": get_value(arr, "departure.quality"),
+            #"departure_quality": get_value(arr, "departure.quality"),
             # Current airport = arrival
             "arrival_scheduledtime_utc": get_value(arr, "arrival.scheduledTime.utc"),
             "arrival_scheduledtime_local": get_value(arr, "arrival.scheduledTime.local"),
@@ -175,7 +175,7 @@ def fetch_aerodatabox_data(api_key_file_path: str, base_url: str, endpoint: str,
             "arrival_runway": get_value(arr, "arrival.runway"),
             "arrival_gate": get_value(arr, "arrival.gate"),
             "arrival_baggagebelt": get_value(arr, "arrival.baggageBelt"),
-            "arrival_quality": get_value(arr, "arrival.quality")
+            #"arrival_quality": get_value(arr, "arrival.quality")
         })
         return rec
     
@@ -186,8 +186,7 @@ def fetch_aerodatabox_data(api_key_file_path: str, base_url: str, endpoint: str,
     
     # --- API calls in two halves ---
     halves = [
-        ("first_half", start_str, mid_str),
-        ("second_half", mid_str, end_str)
+        ("first_half", start_str, mid_str)
     ]
 
     departure_records, arrival_records = [], []
@@ -228,4 +227,4 @@ def fetch_aerodatabox_data(api_key_file_path: str, base_url: str, endpoint: str,
     
     logging.info("All departures and arrivals data are ready for the given airports.")
 
-    return arrival_columns, all_departures, all_arrivals
+    return arrival_columns, departure_columns, all_departures, all_arrivals

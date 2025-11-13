@@ -1,4 +1,5 @@
 import sys, os
+import logging
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -32,8 +33,10 @@ def main():
     BASE_URL = "https://prod.api.market/api/v1/aedbx/aerodatabox"
     endpoint = "flights/airports/"
     
-    arrival_columns, departures, arrivals = fetch_aerodatabox_data("credentials/aerodatabox_api_key.json", BASE_URL, endpoint, airports_icao, "2025-01-02")
+    arrival_columns, departure_columns, departures, arrivals = fetch_aerodatabox_data("credentials/aerodatabox_api_key.json", BASE_URL, endpoint, airports_icao, "2025-01-02")
     
+    #Implement explicit configuration (reading from a YAML or JSON file) to neglect manual work
+    logging.info("Creating airport_departures.....")
     cursor.execute("""
                    CREATE TABLE IF NOT EXISTS airport_departures (
                         flight_number VARCHAR(20),
@@ -48,7 +51,7 @@ def main():
                         airline_iata VARCHAR(10),
                         airline_icao VARCHAR(10),
                         airport_icao VARCHAR(10) NOT NULL,
-                        ingestion_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP(),
+                        ingestion_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP(2),
                         data_source VARCHAR(50) DEFAULT 'AeroDataBox',
 
                         departure_scheduledtime_utc TIMESTAMP,
@@ -59,8 +62,7 @@ def main():
                         departure_runwaytime_local TIMESTAMP,
                         departure_terminal VARCHAR(10),
                         departure_runway VARCHAR(10),
-                        departure_quality VARIANT,
-
+                        
                         arrival_airport_icao VARCHAR(10),
                         arrival_airport_iata VARCHAR(10),
                         arrival_airport_name VARCHAR(100),
@@ -73,11 +75,15 @@ def main():
                         arrival_runwaytime_local TIMESTAMP,
                         arrival_terminal VARCHAR(10),
                         arrival_gate VARCHAR(10),
-                        arrival_baggagebelt VARCHAR(20),
-                        arrival_quality VARIANT
+                        arrival_baggagebelt VARCHAR(20)
+                        
                     )
                 """    
                 )
+    
+    logging.info("Created airport_departures table or existed")
+    
+    logging.info("Creating airport_arrivals table.....")
     
     cursor.execute("""
                    CREATE TABLE IF NOT EXISTS airport_arrivals (
@@ -94,7 +100,7 @@ def main():
                         airline_icao VARCHAR(10),
                         airport_icao VARCHAR(10) NOT NULL,
                         
-                        ingestion_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP(),
+                        ingestion_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP(2),
                         data_source VARCHAR(50) DEFAULT 'AeroDataBox',
 
                         departure_airport_icao VARCHAR(10),
@@ -109,8 +115,7 @@ def main():
                         departure_runwaytime_local TIMESTAMP,
                         departure_terminal VARCHAR(10),
                         departure_runway VARCHAR(10),
-                        departure_quality VARIANT,
-
+                        
                         arrival_scheduledtime_utc TIMESTAMP,
                         arrival_scheduledtime_local TIMESTAMP,
                         arrival_revisedtime_utc TIMESTAMP,
@@ -120,29 +125,28 @@ def main():
                         arrival_terminal VARCHAR(10),
                         arrival_runway VARCHAR(10),
                         arrival_gate VARCHAR(10),
-                        arrival_baggagebelt VARCHAR(20),
-                        arrival_quality VARIANT
+                        arrival_baggagebelt VARCHAR(20)
                     )
                    """)
+    
+    logging.info("Created arrivals table or already existed.")
     
     INSERT_DEPARTURES_QUERY = """
                     INSERT INTO airport_departures (
                         flight_number, flight_date, callsign, status, iscargo,
                         aircraft_reg, aircraft_modeS, aircraft_model,
                         airline_name, airline_iata, airline_icao, airport_icao,
-                        
-                        ingestion_timestamp, data_source,
 
                         departure_scheduledtime_utc, departure_scheduledtime_local,
                         departure_revisedtime_utc, departure_revisedtime_local,
                         departure_runwaytime_utc, departure_runwaytime_local,
-                        departure_terminal, departure_runway, departure_quality,
+                        departure_terminal, departure_runway, 
 
                         arrival_airport_icao, arrival_airport_iata, arrival_airport_name, arrival_airport_timezone,
                         arrival_scheduledtime_utc, arrival_scheduledtime_local,
                         arrival_revisedtime_utc, arrival_revisedtime_local,
                         arrival_runwaytime_utc, arrival_runwaytime_local,
-                        arrival_terminal, arrival_gate, arrival_baggagebelt, arrival_quality
+                        arrival_terminal, arrival_gate, arrival_baggagebelt
                     )
                     VALUES (
                         %s, %s, %s, %s, %s,
@@ -150,17 +154,15 @@ def main():
                         %s, %s, %s, %s,
 
                         %s, %s,
-
                         %s, %s,
                         %s, %s,
                         %s, %s,
-                        %s, %s, %s,
 
                         %s, %s, %s, %s,
                         %s, %s,
                         %s, %s,
                         %s, %s,
-                        %s, %s, %s, %s
+                        %s, %s, %s
                     )
                 """
     INSERT_ARRIVALS_QUERY = """
@@ -168,48 +170,45 @@ def main():
                         flight_number, flight_date, callsign, status, iscargo,
                         aircraft_reg, aircraft_modeS, aircraft_model,
                         airline_name, airline_iata, airline_icao, airport_icao,
-                        
-                        ingestion_timestamp, data_source,
 
                         departure_airport_icao, departure_airport_iata, departure_airport_name, departure_airport_timezone,
                         departure_scheduledtime_utc, departure_scheduledtime_local,
                         departure_revisedtime_utc, departure_revisedtime_local,
                         departure_runwaytime_utc, departure_runwaytime_local,
-                        departure_terminal, departure_runway, departure_quality,
-
+                        departure_terminal, departure_runway,
                         arrival_scheduledtime_utc, arrival_scheduledtime_local,
                         arrival_revisedtime_utc, arrival_revisedtime_local,
                         arrival_runwaytime_utc, arrival_runwaytime_local,
-                        arrival_terminal, arrival_runway, arrival_gate, arrival_baggagebelt, arrival_quality
+                        arrival_terminal, arrival_runway, arrival_gate, arrival_baggagebelt
                     )
                     VALUES (
                         %s, %s, %s, %s, %s,
                         %s, %s, %s,
                         %s, %s, %s, %s,
 
-                        %s, %s,
-
                         %s, %s, %s, %s,
                         %s, %s,
                         %s, %s,
                         %s, %s,
-                        %s, %s, %s,
-
                         %s, %s,
                         %s, %s,
                         %s, %s,
-                        %s, %s, %s, %s, %s
+                        %s, %s,
+                        %s, %s, %s, %s
                     )
-                """
+                    """
 
-
-    cursor.executemany(INSERT_ARRIVALS_QUERY, arrivals)
-
-    logger.info("Finished arrivals data ingestion process finished.")
+    logging.info("insert queries were ready.")
     
     cursor.executemany(INSERT_DEPARTURES_QUERY, departures)
     
     logger.info("Finished departures data ingestion process finished.")
+    
+    logging.info("Started inserting arrivals data.....")
+
+    cursor.executemany(INSERT_ARRIVALS_QUERY, arrivals)
+
+    logger.info("Finished arrivals data ingestion process finished.")
     
 if __name__ == "__main__":
     main()
