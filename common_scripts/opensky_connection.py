@@ -97,10 +97,8 @@ def fetch_opensky_flight_data(airports_icao, columns, opensky_cred_file, api_bas
                 data = response.json()
                 logging.info(f"Successfully retrieved opensky records for {icao}.")
                 
-                ingestion_timestamp = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
-                
                 logging.info("Parsing the results.....")
-                records = [tuple(item.get(col) for col in columns[0:-2]) + (icao, ingestion_timestamp) for item in data]
+                records = [tuple(item.get(col) for col in columns[0:-2]) + (icao, date) for item in data]
                 
                 all_records.extend(records)
                 logging.info("Results were added to global records variable.")
