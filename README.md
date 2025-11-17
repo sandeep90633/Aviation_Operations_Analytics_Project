@@ -4,7 +4,7 @@
 Airports and aviation authorities often face challenges in monitoring flight operations in real time and analyzing schedule adherence across multiple data sources.
 Discrepancies between scheduled and actual flight operations, coupled with the absence of an integrated data platform, make it difficult to evaluate key metrics such as:
 
-- Schedule adherence percentage
+ - Schedule adherence percentage
 
 - Average delays in arrivals and departures
 

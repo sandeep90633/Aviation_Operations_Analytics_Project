@@ -45,12 +45,12 @@ def _ingest_opensky_data(cursor, data, table_name, opensky_columns):
             estArrivalAirportVertDistance INT,
             departureAirportCandidatesCount INT,
             arrivalAirportCandidatesCount INT,
-            airport_icao VARCHAR(10),
             record_date DATE,
-            ingestion_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP()
+            ingestion_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP(),
+            PRIMARY KEY (icao24, firstSeen)
         )
     """)
-    logging.info(f"Table {table_name} is created or existed.")
+    logging.info(f"Table '{table_name}' is created or existed.")
 
     # 2. Insert Data
     placeholders = ', '.join(['%s'] * len(opensky_columns))
@@ -66,31 +66,26 @@ def _ingest_opensky_data(cursor, data, table_name, opensky_columns):
     cursor.executemany(insert_sql, data)
     logging.info(f"'{table_name}' data ingestion process finished.")
     
-def extract_load_opensky_data(airports_icao, columns, opensky_cred_file, OPENSKY_API_BASE_URL, date, connection):
+def extract_load_opensky_data(columns, opensky_cred_file, OPENSKY_API_BASE_URL, date, connection):
     
-    logging.info("Started OpenSky Network arrival and departure retrieval and loading process.............")
-    
-    directions = [
-        {'name': 'departure', 'endpoint': '/flights/departure', 'table': 'flight_departures'}, 
-        {'name': 'arrival', 'endpoint': '/flights/arrival', 'table': 'flight_arrivals'}
-    ]
+    all_flights_dict =  {'name': 'all_flights', 'endpoint': '/flights/all', 'table': 'flights'}
     
     # Fetch Data for both directions
     fetched_data = {}
-    for direction in directions:
-        logging.info(f"Started retrieval process for {direction['name']}...")
-        data, _ = fetch_opensky_flight_data(
-            airports_icao, columns, opensky_cred_file, OPENSKY_API_BASE_URL, direction['endpoint'], date
-        )
-        fetched_data[direction['table']] = data
+ 
+    logging.info(f"Started retrieval process for {all_flights_dict['name']}...")
+    data, _ = fetch_opensky_flight_data(
+        columns, opensky_cred_file, OPENSKY_API_BASE_URL, all_flights_dict['endpoint'], date
+    )
+    fetched_data[all_flights_dict['table']] = data
     
     try:
         # Use the transaction context manager to ensure commit/rollback
         with transaction(connection) as cursor:
-            for direction in directions:
-                table_name = direction['table']
-                data = fetched_data[table_name]
-                _ingest_opensky_data(cursor, data, table_name, columns)
+            
+            table_name = all_flights_dict['table']
+            data = fetched_data[table_name]
+            _ingest_opensky_data(cursor, data, table_name, columns)
     
     except Exception as e:
         # Transaction manager handles rollback/logging; re-raise if necessary
