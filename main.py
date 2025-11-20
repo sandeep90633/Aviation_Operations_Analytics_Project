@@ -1,7 +1,6 @@
-from src.ingestion import extract_load_opensky_data
+from src.flights_ingestion import extract_load_opensky_data
 from utils.logging import setup_logger
 from snowflake_handler import SnowflakeHandler
-import logging
 
 logger = setup_logger('opensky_ingestion.log')
 

@@ -1,7 +1,6 @@
 import requests
 import logging
 import sys, os
-import time
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 

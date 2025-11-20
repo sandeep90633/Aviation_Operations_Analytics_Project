@@ -5,7 +5,6 @@ from contextlib import contextmanager
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from common_scripts.opensky_connection import fetch_opensky_flight_data
-from common_scripts.aerodatabox_connection import fetch_aerodatabox_data
 
 # This ensures atomicity: all inserts commit, or all rollback on error.
 @contextmanager
@@ -93,3 +92,5 @@ def extract_load_opensky_data(columns, opensky_cred_file, OPENSKY_API_BASE_URL, 
         raise e
         
     logging.info("Completed ingesting and loading both OpenSky arrivals and departures data.")
+
+
