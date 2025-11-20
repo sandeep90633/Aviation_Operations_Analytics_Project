@@ -13,11 +13,16 @@ def transaction(conn):
     try:
         cursor = conn.cursor()
         yield cursor
-        conn.commit()
+        conn.commit() 
     except Exception as e:
-        conn.rollback()
+        # Rollback MUST be called on the connection object (conn)
+        conn.rollback() 
         logging.error(f"Transaction failed, rolling back: {e}")
+        cursor.close()
         raise
+    finally:
+        # Always close the cursor, whether success or failure
+        cursor.close()
     
 def _ingest_aerodatabox_data(cursor, data, table_name, column_names, specific_cols_sql):
     """Handles table creation and data insertion for a single AeroDataBox dataset."""
@@ -31,7 +36,7 @@ def _ingest_aerodatabox_data(cursor, data, table_name, column_names, specific_co
         status VARCHAR(50), iscargo BOOLEAN, aircraft_reg VARCHAR(20),
         aircraft_modeS VARCHAR(20), aircraft_model VARCHAR(100), airline_name VARCHAR(100),
         airline_iata VARCHAR(10), airline_icao VARCHAR(10), airport_icao VARCHAR(10) NOT NULL,
-        ingestion_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP(2),
+        ingestion_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP(),
         data_source VARCHAR(50) DEFAULT 'AeroDataBox'
     """
 
@@ -44,6 +49,14 @@ def _ingest_aerodatabox_data(cursor, data, table_name, column_names, specific_co
     cursor.execute(create_table_query)
     logging.info(f"Created {table_name} table or it already existed.")
 
+    # if it exists, delete the data
+    try:
+        cursor.execute(f"TRUNCATE TABLE {table_name}")
+        logging.info(f"Successfully deleted all data from table: {table_name}")
+    except Exception as e:
+        # The transaction context manager handles rollback and logging
+        logging.error(f"Failed to delete data. Error: {e}")
+    
     # Insert Data
     placeholders = ', '.join(['%s'] * len(column_names))
     column_str = ', '.join(column_names)
@@ -59,7 +72,7 @@ def _ingest_aerodatabox_data(cursor, data, table_name, column_names, specific_co
     
 def extract_load_aerodatabox_data(aerodatabox_api_key_path, BASE_URL, endpoint, airports_icao, date, connection):
     
-    logging.info("Started AeroDataBox arrivals and departures retrieval and loading process.............")
+    logging.info(f"Started AeroDataBox arrivals and departures retrieval and loading process for the date : {date}.............")
     
     # Fetch Data
     _, _, departures, arrivals = fetch_aerodatabox_data(

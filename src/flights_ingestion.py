@@ -13,11 +13,17 @@ def transaction(conn):
     try:
         cursor = conn.cursor()
         yield cursor
-        conn.commit()
+        # Commit on the connection object
+        conn.commit() 
     except Exception as e:
-        conn.rollback()
+        # Rollback MUST be called on the connection object (conn)
+        conn.rollback() 
         logging.error(f"Transaction failed, rolling back: {e}")
+        cursor.close()
         raise
+    finally:
+        # Always close the cursor, whether success or failure
+        cursor.close()
     
 def _ingest_opensky_data(cursor, data, table_name, opensky_columns):
     """Handles table creation and data insertion for a single OpenSky dataset."""
@@ -28,7 +34,7 @@ def _ingest_opensky_data(cursor, data, table_name, opensky_columns):
 
     logging.info(f"Started ingestion for OpenSky {table_name}...")
     
-    # 1. Create Table
+    # Create Table
     logging.info(f"Creating OpenSky table: {table_name} or checking its existence....")
     cursor.execute(f"""
         CREATE TABLE IF NOT EXISTS {table_name} (
@@ -51,7 +57,14 @@ def _ingest_opensky_data(cursor, data, table_name, opensky_columns):
     """)
     logging.info(f"Table '{table_name}' is created or existed.")
 
-    # 2. Insert Data
+    # if it exists, delete the data
+    try:
+        cursor.execute(f"TRUNCATE TABLE {table_name}")
+        logging.info(f"Successfully deleted all data from table: {table_name}")
+    except Exception as e:
+        logging.error(f"Failed to delete data. Error: {e}")
+
+    # Insert Data
     placeholders = ', '.join(['%s'] * len(opensky_columns))
     column_str = ', '.join(opensky_columns)
     
@@ -66,6 +79,8 @@ def _ingest_opensky_data(cursor, data, table_name, opensky_columns):
     logging.info(f"'{table_name}' data ingestion process finished.")
     
 def extract_load_opensky_data(columns, opensky_cred_file, OPENSKY_API_BASE_URL, date, connection):
+    
+    logging.info(f"Started OpenSky Network flights data retrieval and loading process for the date: {date}.............")
     
     all_flights_dict =  {'name': 'all_flights', 'endpoint': '/flights/all', 'table': 'flights'}
     

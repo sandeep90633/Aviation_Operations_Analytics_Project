@@ -13,7 +13,7 @@ class AeroDataBoxAPIError(Exception):
     pass
 
 def make_aerodatabox_request(api_key: str, base_url: str, endpoint: str, code_type: str,
-                             code: str, time_from: str, time_to: str, timeout: int = 15):
+                             code: str, time_from: str, time_to: str, timeout: int = 60):
     """
     Makes a request to the AeroDataBox API for flight arrivals/departures.
 

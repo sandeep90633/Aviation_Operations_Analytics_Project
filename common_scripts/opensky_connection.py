@@ -69,7 +69,7 @@ def make_OpenSky_request(API_BASE_URL, endpoint, date, token):
     logging.info(f"Making API request to {url}...")
     
     try:
-        response = requests.get(url, params=params, headers=headers)
+        response = requests.get(url, params=params, headers=headers, timeout= 120)
         response.raise_for_status() 
         
         remaining_credits = response.headers.get('X-Rate-Limit-Remaining')
@@ -88,7 +88,7 @@ def make_OpenSky_request(API_BASE_URL, endpoint, date, token):
         
         elif '429 Client Error' in str(e):
             
-            logging.error(f"429 error received. Reached request limit. Stopping the script.")
+            logging.error(f"429 error received. Reached request limit. Stopping the script execution.")
             raise Exception ("Reached Request limit!")
         
         else:
