@@ -1,0 +1,21 @@
+version: 2
+
+sources:
+  - name: bootcamp
+    database: dataexpert_student
+    schema: bootcamp
+    tables:
+      - name: js_raw_orders
+        freshness:
+          warn_after:
+            count: 1
+            period: day
+          error_after:
+            count: 7
+            period: day
+        loaded_at_field: last_updated_dt
+
+      - name: js_raw_payments
+      - name: js_raw_customers
+
+      - name: incremental_example_raw_orders
