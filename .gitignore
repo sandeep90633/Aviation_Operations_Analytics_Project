@@ -4,3 +4,4 @@ snowflake_configs.json
 *.log
 __pycache__/
 rsa_key.p8
+profiles.yml
