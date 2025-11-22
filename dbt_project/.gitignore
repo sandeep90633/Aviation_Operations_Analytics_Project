@@ -9,4 +9,3 @@ venv/
 dbt_packages/
 target/
 package-lock.yml
-profiles.yml

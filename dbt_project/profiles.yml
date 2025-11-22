@@ -3,7 +3,7 @@ jaffle_shop:
   outputs:
     dev:
       type: snowflake
-      account: 
+      account: "{{ env_var('SNOWFLAKE_ACCOUNT')}}"
 
       # User/password auth
       user: "{{ env_var('SNOWFLAKE_USER')}}"
@@ -26,7 +26,7 @@ jaffle_shop:
 
     prod:
       type: snowflake
-      account: 
+      account: "{{ env_var('SNOWFLAKE_ACCOUNT')}}"
 
       # User/password auth
       user: "{{ env_var('SNOWFLAKE_USER')}}"

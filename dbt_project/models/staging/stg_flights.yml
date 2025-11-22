@@ -1,0 +1,9 @@
+version: 2
+
+models:
+  - name: stg_flights
+    description: staging table for flights
+    columns:
+      - name: icao24
+        data_tests:
+          - not_null
