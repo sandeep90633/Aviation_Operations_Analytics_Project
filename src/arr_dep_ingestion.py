@@ -2,12 +2,15 @@ import sys, os
 import logging
 import requests
 import urllib.parse
+from dotenv import load_dotenv
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from utils.json_reader import json_reader
 from utils.date_ranges import date_string_to_day_range_epoch
 from utils.transaction_cursor import transaction
+
+load_dotenv()
 class AeroDataBoxAPIError(Exception):
     """Custom exception for AeroDataBox API errors."""
     pass
@@ -164,8 +167,13 @@ def fetch_aerodatabox_data(api_key_file_path: str, base_url: str, endpoint: str,
         })
         return rec
     
-    credentials = json_reader(api_key_file_path)
-    api_key = credentials['key']
+    aerodatabox_api_key = os.getenv('AERODATABOX_API_KEY')
+    
+    if not aerodatabox_api_key:
+        logging.info("AeroDataBox api key was not provided via .env, taking it from local json file.")
+        credentials = json_reader(api_key_file_path)
+    
+    api_key = aerodatabox_api_key or credentials['key']
     
     _, _, start_str, mid_str, end_str = date_string_to_day_range_epoch(date)
     

@@ -19,12 +19,9 @@ def main():
     
     OPENSKY_API_BASE_URL = "https://opensky-network.org/api"
     
-    date = "2025-01-01"
+    date = "2025-01-02"
     
-    snowflake_handler = SnowflakeHandler(
-        credentials_dir="credentials", 
-        file_name="snowflake_configs.json"
-    )
+    snowflake_handler = SnowflakeHandler()
 
     if not snowflake_handler.conn:
         logger.info("Connecting to Snowflake...")

@@ -8,18 +8,11 @@ from cryptography.hazmat.primitives import serialization
 
 load_dotenv()
 class SnowflakeHandler:
-    def __init__(self,
-                 credentials_dir: str,
-                 file_name: str):
+    def __init__(self):
         """
         Initialize Snowflake manager with connection params
-
-        Args:
-            credentials_dir: Path to credentials directory
-            file_name: name of the snowflake config file
+        
         """
-        self.credentials_dir = Path(credentials_dir)
-        self.file_name = file_name
         self.conn = None
         self.sf_options = self._load_config()
 

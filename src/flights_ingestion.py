@@ -1,6 +1,7 @@
 import sys, os
 import logging
 import requests
+from dotenv import load_dotenv
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -8,17 +9,24 @@ from utils.json_reader import json_reader
 from utils.date_ranges import date_string_to_day_range_epoch
 from utils.transaction_cursor import transaction
 
+load_dotenv()
+
 AUTH_URL = "https://auth.opensky-network.org/auth/realms/opensky-network/protocol/openid-connect/token"
 
 def get_access_token(file_path):
     """Requests a new access token from the OpenSky auth server."""
     
     logging.info("Loading OpenSky Network credentials....")
-    credentials = json_reader(file_path)
+    opensky_client_id = os.getenv('OPENSKY_CLIENT_ID')
+    opensky_secret = os.getenv('OPENSKY_CLIENT_SECRET')
+    
+    if not opensky_client_id:
+        logging.info("OpenSky credentials were not provided via .env, taking it from local json file.")
+        credentials = json_reader(file_path)
     
     # OpenSky API Client Credentials
-    CLIENT_ID = credentials['clientId']
-    CLIENT_SECRET = credentials['clientSecret']
+    CLIENT_ID = opensky_client_id or credentials['clientId']
+    CLIENT_SECRET = opensky_secret or credentials['clientSecret']
     
     logging.info("Requesting new Access Token...")
     

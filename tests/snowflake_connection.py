@@ -52,10 +52,7 @@ def main():
         return
     
     try:
-        snowflake_handler = SnowflakeHandler(
-            credentials_dir="credentials", 
-            file_name="snowflake_configs.json"
-        )
+        snowflake_handler = SnowflakeHandler()
 
         if not snowflake_handler.conn:
             logger.info("Connecting to Snowflake...")
