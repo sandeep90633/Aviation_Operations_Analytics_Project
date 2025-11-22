@@ -1,11 +1,12 @@
-import json
 import os
 from pathlib import Path
 import snowflake.connector
 from typing import Dict
 import logging
+from dotenv import load_dotenv
 from cryptography.hazmat.primitives import serialization
 
+load_dotenv()
 class SnowflakeHandler:
     def __init__(self,
                  credentials_dir: str,
@@ -23,29 +24,16 @@ class SnowflakeHandler:
         self.sf_options = self._load_config()
 
     def _load_config(self) -> Dict[str, str]:
-        """Load configuration from credential files"""
-        env_path = self.credentials_dir / self.file_name
-        logging.info(f"Loading snowflake credentials from the path: {env_path}")
-        # Read profiles.yml
-        try:
-            with open(env_path, 'r') as f:
-                target_config = json.load(f)
-                logging.info("Snowflake configs were loaded.")
-        except FileNotFoundError:
-            raise FileNotFoundError(f"Snowflake config file not found: {env_path}")
-        except json.JSONDecodeError:
-            raise ValueError(f"Invalid JSON format in {env_path}")
-        
         # Create connection parameters with env var overrides
         return {
-            "sfAccount": os.getenv('SNOWFLAKE_ACCOUNT', target_config['account']),
-            "sfUser": os.getenv('SNOWFLAKE_USER', target_config['user']),
-            "sfprivate_key_path": os.getenv('SNOWFLAKE_PRIVATE_KEY_PATH', target_config['private_key_path']),
-            "sfprivate_key_passphrase": os.getenv('SNOWFLAKE_PRIVATE_KEY_PASSPHRASE', target_config['private_key_passphrase']),
-            "sfDatabase": os.getenv('SNOWFLAKE_DATABASE', target_config['database']),
-            "sfSchema": os.getenv('SNOWFLAKE_SCHEMA', target_config['schema']),
-            "sfWarehouse": os.getenv('SNOWFLAKE_WAREHOUSE', target_config['warehouse']),
-            "sfRole": os.getenv('SNOWFLAKE_ROLE', target_config['role'])
+            "sfAccount": os.getenv('SNOWFLAKE_ACCOUNT'),
+            "sfUser": os.getenv('SNOWFLAKE_USER'),
+            "sfprivate_key": os.getenv('SNOWFLAKE_PRIVATE_KEY'),
+            "sfprivate_key_passphrase": os.getenv('SNOWFLAKE_PRIVATE_KEY_PASSPHRASE'),
+            "sfDatabase": os.getenv('SNOWFLAKE_DATABASE'),
+            "sfSchema": os.getenv('STUDENT_SCHEMA'),
+            "sfWarehouse": os.getenv('SNOWFLAKE_WAREHOUSE'),
+            "sfRole": os.getenv('SNOWFLAKE_ROLE')
         }
 
     def connect(self):
@@ -53,11 +41,17 @@ class SnowflakeHandler:
         
         logging.info("Connecting with snowflake with private key......")
         
-        with open(self.sf_options['sfprivate_key_path'], "rb") as key:
-            p_key = serialization.load_pem_private_key(
-                key.read(),
-                password=self.sf_options['sfprivate_key_passphrase'].encode()
-            )
+        private_key_str  = self.sf_options["sfprivate_key"]  # This comes directly from ENV
+        private_key_passphrase = self.sf_options["sfprivate_key_passphrase"]
+
+        # Convert string to bytes
+        private_key_bytes = private_key_str.encode()
+        
+        p_key = serialization.load_pem_private_key(
+            private_key_bytes,
+            password=private_key_passphrase.encode()
+        )
+        
         if not self.conn:
             self.conn = snowflake.connector.connect(
                 user=self.sf_options['sfUser'],

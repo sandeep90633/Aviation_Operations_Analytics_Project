@@ -5,3 +5,4 @@ snowflake_configs.json
 __pycache__/
 rsa_key.p8
 profiles.yml
+.env

@@ -6,13 +6,12 @@ jaffle_shop:
       account: 
 
       # User/password auth
-      user: "{{ env_var('STUDENT_SCHEMA')}}"
-      password: 
-      private_key: 
-      private_key_passphrase: 
-      role:
-      database: 
-      warehouse:
+      user: "{{ env_var('SNOWFLAKE_USER')}}"
+      private_key: "{{ env_var('SNOWFLAKE_PRIVATE_KEY')}}"
+      private_key_passphrase: "{{ env_var('SNOWFLAKE_PRIVATE_KEY_PASSPHRASE')}}"
+      role: "{{ env_var('SNOWFLAKE_ROLE')}}"
+      database: "{{ env_var('SNOWFLAKE_DATABASE')}}"
+      warehouse: "{{ env_var('SNOWFLAKE_WAREHOUSE')}}"
       schema: "{{ env_var('STUDENT_SCHEMA')}}"
       threads: 1
       client_session_keep_alive: False
@@ -30,13 +29,12 @@ jaffle_shop:
       account: 
 
       # User/password auth
-      user: 
-      password: 
-      private_key: 
-      private_key_passphrase: 
-      role: 
-      database: 
-      warehouse: 
+      user: "{{ env_var('SNOWFLAKE_USER')}}"
+      private_key: "{{ env_var('SNOWFLAKE_PRIVATE_KEY')}}"
+      private_key_passphrase: "{{ env_var('SNOWFLAKE_PRIVATE_KEY_PASSPHRASE')}}"
+      role: "{{ env_var('SNOWFLAKE_ROLE')}}"
+      database: "{{ env_var('SNOWFLAKE_DATABASE')}}"
+      warehouse: "{{ env_var('SNOWFLAKE_WAREHOUSE')}}"
       schema: "{{ env_var('STUDENT_SCHEMA')}}_prod"
       threads: 1
       client_session_keep_alive: False
