@@ -29,12 +29,12 @@ def main():
     
     connection = snowflake_handler.conn
     
-    extract_load_opensky_data(columns, opensky_cred_file, OPENSKY_API_BASE_URL, date, connection)
+    #extract_load_opensky_data(columns, opensky_cred_file, OPENSKY_API_BASE_URL, date, connection)
     
     aerodatabox_api_key_path = "credentials/aerodatabox_api_key.json"
     AERODATABOX_BASE_URL = "https://prod.api.market/api/v1/aedbx/aerodatabox"
     endpoint = "flights/airports/"
-    airports = ['EDDF', 'KJFK']
+    airports = ['EDDF']
     
     extract_load_aerodatabox_data(aerodatabox_api_key_path, AERODATABOX_BASE_URL, endpoint, airports, date, snowflake_handler.conn)
 
