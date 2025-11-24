@@ -110,8 +110,20 @@ def aviation_platform():
             execution_date,
             connection
         )
+        
+    dbt_stg_flights = DbtTaskGroup(
+        group_id="jaffle_shop_cosmos_dag",
+        project_config=ProjectConfig(PATH_TO_DBT_PROJECT),
+        profile_config=profile_config,
+        execution_config=ExecutionConfig(
+            dbt_executable_path=f"{airflow_home}/dbt_venv/bin/dbt",
+        ),
+        render_config=RenderConfig(
+            select=["+stg_flights"],
+        ),
+    )
 
     # Task Dependencies
-    opensky_flights_data() >> aerodatabox_dep_arr_data()
+    [opensky_flights_data(), aerodatabox_dep_arr_data()] >> dbt_stg_flights
 
 aviation_platform()
