@@ -1,8 +1,31 @@
 opensky_credentials.json
 aerodatabox_api_key.json
 snowflake_configs.json
+rsa_key.p8
+
+.git
+.DS_Store
+*venv
 *.log
 __pycache__/
-rsa_key.p8
-profiles.yml
-.env
+
+## airflow files
+airflow_settings.yaml
+__pycache__/
+astro
+airflow-webserver.pid
+airflow.cfg
+airflow.db
+dbt_project/.env
+dbt_project/venv
+.vscode
+.idea/
+
+## dbt project files
+dbt_project/logs/
+dbt_project/.user.yml
+dbt_project/target/
+dbt_project/dbt_packages/
+dbt_project/*venv/
+dbt_project/dbt.env
+package-lock.yml

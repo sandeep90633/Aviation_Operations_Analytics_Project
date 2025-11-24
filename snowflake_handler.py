@@ -63,7 +63,7 @@ class SnowflakeHandler:
             # Simple test query
             with self.conn.cursor() as cur:
                 cur.execute("SELECT CURRENT_VERSION()")
-                logging.info("Connected to Snowflake:", cur.fetchone()[0])
+                logging.info(f"Connected to Snowflake: {cur.fetchone()[0]}")
 
     def validate_connection(self):
         """Validate that all required parameters are present"""

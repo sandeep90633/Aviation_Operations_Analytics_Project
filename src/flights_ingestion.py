@@ -207,26 +207,24 @@ def _ingest_opensky_data(cursor, data, table_name, opensky_columns):
     cursor.executemany(insert_sql, data)
     logging.info(f"'{table_name}' data ingestion process finished.")
     
-def extract_load_opensky_data(columns, opensky_cred_file, OPENSKY_API_BASE_URL, date, connection):
+def extract_load_opensky_data(columns, opensky_cred_file, OPENSKY_API_BASE_URL, date, endpoint, table, connection):
     
     logging.info(f"Started OpenSky Network flights data retrieval and loading process for the date: {date}.............")
-    
-    all_flights_dict =  {'name': 'all_flights', 'endpoint': '/flights/all', 'table': 'flights'}
     
     # Fetch Data for both directions
     fetched_data = {}
  
-    logging.info(f"Started retrieval process for {all_flights_dict['name']}...")
+    logging.info(f"Started retrieval process for all flights in {date}...")
     data, _ = fetch_opensky_flight_data(
-        columns, opensky_cred_file, OPENSKY_API_BASE_URL, all_flights_dict['endpoint'], date
+        columns, opensky_cred_file, OPENSKY_API_BASE_URL, endpoint, date
     )
-    fetched_data[all_flights_dict['table']] = data
+    fetched_data[table] = data
     
     try:
         # Use the transaction context manager to ensure commit/rollback
         with transaction(connection) as cursor:
             
-            table_name = all_flights_dict['table']
+            table_name = table
             data = fetched_data[table_name]
             _ingest_opensky_data(cursor, data, table_name, columns)
     
@@ -236,5 +234,4 @@ def extract_load_opensky_data(columns, opensky_cred_file, OPENSKY_API_BASE_URL, 
         raise e
         
     logging.info("Completed ingesting and loading both OpenSky arrivals and departures data.")
-
 
