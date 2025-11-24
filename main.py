@@ -22,21 +22,44 @@ def main():
     date = "2025-01-02"
     
     snowflake_handler = SnowflakeHandler()
-
-    if not snowflake_handler.conn:
+    connection = snowflake_handler.conn
+    
+    if not connection:
         logger.info("Connecting to Snowflake...")
         snowflake_handler.connect()
-    
-    connection = snowflake_handler.conn
+        
+    cursor = snowflake_handler.conn.cursor()
     
     #extract_load_opensky_data(columns, opensky_cred_file, OPENSKY_API_BASE_URL, date, connection)
     
     aerodatabox_api_key_path = "credentials/aerodatabox_api_key.json"
     AERODATABOX_BASE_URL = "https://prod.api.market/api/v1/aedbx/aerodatabox"
     endpoint = "flights/airports/"
-    airports = ['EDDF']
     
-    extract_load_aerodatabox_data(aerodatabox_api_key_path, AERODATABOX_BASE_URL, endpoint, airports, date, snowflake_handler.conn)
+    airports_query = "SELECT DISTINCT icao FROM airports"
+    cursor.execute(airports_query)
+    
+    # Fetch all rows (each row is a tuple)
+    rows = cursor.fetchall()
+
+    # Extract only the airport values into a list
+    airports_to_fetch = [row[0] for row in rows]
+
+    if len(airports_to_fetch) > 0:
+        logger.info(f"Fetched all airports' icao codes. \n airport: {airports_to_fetch}")
+        extract_load_aerodatabox_data(
+            aerodatabox_api_key_path,
+            AERODATABOX_BASE_URL,
+            endpoint,
+            airports_to_fetch,
+            date,
+            connection
+        )
+    else:
+        logger.error("No airports were fetched from snowflake.")
+        raise Exception ("noAirportsData")
+        
+    extract_load_aerodatabox_data(aerodatabox_api_key_path, AERODATABOX_BASE_URL, endpoint, airports_to_fetch, date, snowflake_handler.conn)
 
 if __name__ == "__main__":
     main()

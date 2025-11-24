@@ -1,0 +1,17 @@
+version: 2
+
+models:
+  - name: stg_airports
+    description: Cleaned and standardized staging model for airport metadata. Contains one record per ICAO airport code.
+    columns:
+      - name: airport_key
+        description: "Surrogate key generated from airport_icao."
+        tests:
+          - not_null
+          - unique
+          
+      - name: airport_icao
+        description: "4-letter ICAO airport code, globally unique identifier."
+        tests:
+          - not_null
+          - unique

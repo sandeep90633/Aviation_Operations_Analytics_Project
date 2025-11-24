@@ -186,13 +186,6 @@ def _ingest_opensky_data(cursor, data, table_name, opensky_columns):
     """)
     logging.info(f"Table '{table_name}' is created or existed.")
 
-    # if it exists, delete the data
-    try:
-        cursor.execute(f"TRUNCATE TABLE {table_name}")
-        logging.info(f"Successfully deleted all data from table: {table_name}")
-    except Exception as e:
-        logging.error(f"Failed to delete data. Error: {e}")
-
     # Insert Data
     placeholders = ', '.join(['%s'] * len(opensky_columns))
     column_str = ', '.join(opensky_columns)

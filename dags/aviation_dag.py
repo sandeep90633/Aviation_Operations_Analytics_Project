@@ -37,7 +37,10 @@ def get_snowflake_connection(logger):
         logger.info("Connecting to Snowflake...")
         handler.connect()
 
-    return handler.conn
+    connection = handler.conn
+    cursor = handler.conn.cursor()
+    
+    return connection, cursor
 
 @dag(
     dag_id="load_aviation_data",
@@ -74,7 +77,7 @@ def aviation_platform():
         endpoint = "/flights/all"
         table_name = "flights"
 
-        connection = get_snowflake_connection(logger)
+        connection, _ = get_snowflake_connection(logger)
 
         extract_load_opensky_data(
             columns,
@@ -98,20 +101,20 @@ def aviation_platform():
         AERODATABOX_API = "https://prod.api.market/api/v1/aedbx/aerodatabox"
         endpoint = "flights/airports/"
 
-        connection = get_snowflake_connection(logger)
+        connection, cursor = get_snowflake_connection(logger)
         
         logger.info("Executing query to fetch the airports.....")
-        airports_query = "SELECT DISTINCT icao FROM airports"
-        connection.cursor.execute(airports_query)
+        airports_query = "SELECT DISTINCT icao FROM airports LIMIT 3"
+        cursor.execute(airports_query)
         
         # Fetch all rows (each row is a tuple)
-        rows = connection.cursor.fetchall()
+        rows = cursor.fetchall()
     
         # Extract only the airport values into a list
         airports_to_fetch = [row[0] for row in rows]
-
+        
         if len(airports_to_fetch) > 0:
-            logger.info(f"Fetched all airports icao codes. \n airport: {airports_to_fetch}")
+            logger.info(f"Fetched all airports' icao codes. \n airport: {airports_to_fetch}")
             extract_load_aerodatabox_data(
                 aerodatabox_key_path,
                 AERODATABOX_API,
@@ -120,9 +123,24 @@ def aviation_platform():
                 execution_date,
                 connection
             )
+        else:
+            logger.error("No airports were fetched from snowflake.")
+            raise Exception ("noAirportsData")
+    
+    dbt_stg_airports = DbtTaskGroup(
+        group_id="airports_data",
+        project_config=ProjectConfig(PATH_TO_DBT_PROJECT),
+        profile_config=profile_config,
+        execution_config=ExecutionConfig(
+            dbt_executable_path=f"{airflow_home}/dbt_venv/bin/dbt",
+        ),
+        render_config=RenderConfig(
+            select=["+stg_airports"],
+        ),
+    )
         
     dbt_stg_flights = DbtTaskGroup(
-        group_id="jaffle_shop_cosmos_dag",
+        group_id="flights_data",
         project_config=ProjectConfig(PATH_TO_DBT_PROJECT),
         profile_config=profile_config,
         execution_config=ExecutionConfig(
@@ -134,6 +152,6 @@ def aviation_platform():
     )
 
     # Task Dependencies
-    [opensky_flights_data(), aerodatabox_dep_arr_data()] >> dbt_stg_flights
+    [opensky_flights_data(), aerodatabox_dep_arr_data()] >> dbt_stg_airports >> dbt_stg_flights
 
 aviation_platform()

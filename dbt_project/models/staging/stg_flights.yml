@@ -2,8 +2,20 @@ version: 2
 
 models:
   - name: stg_flights
-    description: staging table for flights
+    description: Staging model for global flight events. Normalizes airport codes, and ensures uniqueness per ICAO24 + first_seen.
     columns:
       - name: icao24
-        data_tests:
+        description: "Unique transponder address of the aircraft."
+        tests:
           - not_null
+        
+      - name: first_seen_ts
+        description: "Timestamp converted from UNIX firstseen."
+        tests:
+          - not_null
+
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - icao24
+            - first_seen_ts

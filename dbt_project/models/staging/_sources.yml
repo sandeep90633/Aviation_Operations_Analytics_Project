@@ -1,19 +1,10 @@
 version: 2
 
 sources:
-  - name: aviation
-    database: dataexpert_student
+  - name: raw_layer
     schema: sandeep90633
     tables:
+      - name: airports
       - name: flights
-        freshness:
-          warn_after:
-            count: 1
-            period: day
-          error_after:
-            count: 7
-            period: day
-        loaded_at_field: ingestion_timestamp
-
-      - name: airport_arrivals
       - name: airport_departures
+      - name: airport_arrivals

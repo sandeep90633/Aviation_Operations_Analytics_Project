@@ -247,14 +247,6 @@ def _ingest_aerodatabox_data(cursor, data, table_name, column_names, specific_co
     """
     cursor.execute(create_table_query)
     logging.info(f"Created {table_name} table or it already existed.")
-
-    # if it exists, delete the data
-    try:
-        cursor.execute(f"TRUNCATE TABLE {table_name}")
-        logging.info(f"Successfully deleted all data from table: {table_name}")
-    except Exception as e:
-        # The transaction context manager handles rollback and logging
-        logging.error(f"Failed to delete data. Error: {e}")
     
     # Insert Data
     placeholders = ', '.join(['%s'] * len(column_names))
