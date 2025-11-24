@@ -13,6 +13,8 @@ from utils.logging import setup_logger
 dbt_env_path = os.path.join(os.environ['AIRFLOW_HOME'], 'dbt_project', 'dbt.env')
 load_dotenv(dbt_env_path)
 
+logger = setup_logger('aviation_operations.log')
+
 # Environment variables
 airflow_home = os.getenv('AIRFLOW_HOME')
 PATH_TO_DBT_PROJECT = f'{airflow_home}/dbt_project'
@@ -56,7 +58,6 @@ def aviation_platform():
     # -----------------------------------------------------
     @task(task_id="opensky_flights")
     def opensky_flights_data(**context):
-        logger = setup_logger("opensky_ingestion.log")
 
         execution_date = context["ds"]  # YYYY-MM-DD string
 
@@ -90,7 +91,6 @@ def aviation_platform():
     # -----------------------------------------------------
     @task(task_id="aerodatabox_dep_arr")
     def aerodatabox_dep_arr_data(**context):
-        logger = setup_logger("aerodatabox_ingestion.log")
 
         execution_date = context["ds"]
 
@@ -98,18 +98,28 @@ def aviation_platform():
         AERODATABOX_API = "https://prod.api.market/api/v1/aedbx/aerodatabox"
         endpoint = "flights/airports/"
 
-        airports_to_fetch = ["EDDF", "KJFK"]
-
         connection = get_snowflake_connection(logger)
+        
+        logger.info("Executing query to fetch the airports.....")
+        airports_query = "SELECT DISTINCT icao FROM airports"
+        connection.cursor.execute(airports_query)
+        
+        # Fetch all rows (each row is a tuple)
+        rows = connection.cursor.fetchall()
+    
+        # Extract only the airport values into a list
+        airports_to_fetch = [row[0] for row in rows]
 
-        extract_load_aerodatabox_data(
-            aerodatabox_key_path,
-            AERODATABOX_API,
-            endpoint,
-            airports_to_fetch,
-            execution_date,
-            connection
-        )
+        if len(airports_to_fetch) > 0:
+            logger.info(f"Fetched all airports icao codes. \n airport: {airports_to_fetch}")
+            extract_load_aerodatabox_data(
+                aerodatabox_key_path,
+                AERODATABOX_API,
+                endpoint,
+                airports_to_fetch,
+                execution_date,
+                connection
+            )
         
     dbt_stg_flights = DbtTaskGroup(
         group_id="jaffle_shop_cosmos_dag",

@@ -1,5 +1,4 @@
 import os
-from pathlib import Path
 import snowflake.connector
 from typing import Dict
 import logging
