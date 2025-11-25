@@ -150,8 +150,32 @@ def aviation_platform():
             select=["+stg_flights"],
         ),
     )
+    
+    dbt_stg_departures = DbtTaskGroup(
+        group_id="departures_data",
+        project_config=ProjectConfig(PATH_TO_DBT_PROJECT),
+        profile_config=profile_config,
+        execution_config=ExecutionConfig(
+            dbt_executable_path=f"{airflow_home}/dbt_venv/bin/dbt",
+        ),
+        render_config=RenderConfig(
+            select=["+stg_airport_departures"],
+        ),
+    )
+    
+    dbt_stg_arrivals = DbtTaskGroup(
+        group_id="arrivals_data",
+        project_config=ProjectConfig(PATH_TO_DBT_PROJECT),
+        profile_config=profile_config,
+        execution_config=ExecutionConfig(
+            dbt_executable_path=f"{airflow_home}/dbt_venv/bin/dbt",
+        ),
+        render_config=RenderConfig(
+            select=["+stg_airport_arrivals"],
+        ),
+    )
 
     # Task Dependencies
-    [opensky_flights_data(), aerodatabox_dep_arr_data()] >> dbt_stg_airports >> dbt_stg_flights
+    [opensky_flights_data(), aerodatabox_dep_arr_data()] >> dbt_stg_airports >> dbt_stg_flights >> dbt_stg_departures >> dbt_stg_arrivals 
 
 aviation_platform()

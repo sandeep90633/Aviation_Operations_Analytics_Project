@@ -11,7 +11,7 @@ WITH source as (
 renamed as (
     SELECT
         upper(icao24) as icao24,
-        upper(callsign) as callsign,
+        upper(TRIM(callsign)) as callsign,
         upper(estdepartureairport) as est_departure_airport,
         upper(estarrivalairport) as est_arrival_airport,
         try_cast(firstseen as number) as first_seen,
