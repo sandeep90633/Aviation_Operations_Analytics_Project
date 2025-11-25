@@ -87,11 +87,12 @@ def fetch_aerodatabox_data(api_key_file_path: str, base_url: str, endpoint: str,
     def base_flight_fields(record: dict, airport_icao: str) -> dict:
         """Fields shared by both arrivals and departures."""
         return {
-            "flight_number": get_value(record, "number"),
+            "number": get_value(record, "number"),
             "flight_date": date,
-            "callsign": get_value(record, "callSign"),
-            "status": get_value(record, "codeshareStatus"),
-            "iscargo": get_value(record, "isCargo"),
+            "callSign": get_value(record, "callSign"),
+            "status": get_value(record, "status"),
+            "codeshareStatus": get_value(record, "codeshareStatus"),
+            "isCargo": get_value(record, "isCargo"),
             "aircraft_reg": get_value(record, "aircraft.reg"),
             "aircraft_modeS": get_value(record, "aircraft.modeS"),
             "aircraft_model": get_value(record, "aircraft.model"),
@@ -231,8 +232,8 @@ def _ingest_aerodatabox_data(cursor, data, table_name, column_names, specific_co
 
     # Base columns common to both AeroDataBox tables
     base_columns_sql = """
-        flight_number VARCHAR(20), flight_date DATE NOT NULL, callsign VARCHAR(20),
-        status VARCHAR(50), iscargo BOOLEAN, aircraft_reg VARCHAR(20),
+        number VARCHAR(20), flight_date DATE NOT NULL, callSign VARCHAR(20),
+        status VARCHAR(50), codeshareStatus VARCHAR(50), isCargo BOOLEAN, aircraft_reg VARCHAR(20),
         aircraft_modeS VARCHAR(20), aircraft_model VARCHAR(100), airline_name VARCHAR(100),
         airline_iata VARCHAR(10), airline_icao VARCHAR(10), airport_icao VARCHAR(10) NOT NULL,
         ingestion_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP(),
@@ -285,7 +286,7 @@ def extract_load_aerodatabox_data(aerodatabox_api_key_path, BASE_URL, endpoint, 
     """
     departure_cols = [
         # Common
-        'flight_number', 'flight_date', 'callsign', 'status', 'iscargo', 'aircraft_reg', 'aircraft_modeS', 'aircraft_model',
+        'number', 'flight_date', 'callSign', 'status', 'codeshareStatus', 'isCargo', 'aircraft_reg', 'aircraft_modeS', 'aircraft_model',
         'airline_name', 'airline_iata', 'airline_icao', 'airport_icao',
         # Departure Specific
         'departure_scheduledtime_utc', 'departure_scheduledtime_local', 'departure_revisedtime_utc', 'departure_revisedtime_local',
@@ -312,7 +313,7 @@ def extract_load_aerodatabox_data(aerodatabox_api_key_path, BASE_URL, endpoint, 
     """
     arrival_cols = [
         # Common
-        'flight_number', 'flight_date', 'callsign', 'status', 'iscargo', 'aircraft_reg', 'aircraft_modeS', 'aircraft_model',
+        'number', 'flight_date', 'callSign', 'status', 'codeshareStatus', 'isCargo', 'aircraft_reg', 'aircraft_modeS', 'aircraft_model',
         'airline_name', 'airline_iata', 'airline_icao', 'airport_icao',
         # Departure Info (origin)
         'departure_airport_icao', 'departure_airport_iata', 'departure_airport_name', 'departure_airport_timezone',

@@ -104,7 +104,7 @@ def aviation_platform():
         connection, cursor = get_snowflake_connection(logger)
         
         logger.info("Executing query to fetch the airports.....")
-        airports_query = "SELECT DISTINCT icao FROM airports LIMIT 3"
+        airports_query = "SELECT icao FROM airports WHERE COUNTRY IN ('DE', 'FR', 'CH','AE')"
         cursor.execute(airports_query)
         
         # Fetch all rows (each row is a tuple)
