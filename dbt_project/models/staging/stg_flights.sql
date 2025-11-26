@@ -28,8 +28,6 @@ renamed as (
         ingestion_timestamp,
     FROM
         source
-    WHERE 
-        estarrivalairport IS NOT NULL and estdepartureairport IS NOT NULL
 ),
 
 deduplicated as (

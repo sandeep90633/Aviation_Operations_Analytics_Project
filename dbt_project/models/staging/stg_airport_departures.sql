@@ -82,7 +82,7 @@ deduplicated AS (
         filtered
     qualify row_number() over (
         partition by flight_number, flight_date, airport_icao, departure_scheduled_utc, arrival_airport_icao, arrival_scheduled_utc
-        order by flight_date desc
+        order by ingestion_timestamp desc
     ) = 1 
 )
 
