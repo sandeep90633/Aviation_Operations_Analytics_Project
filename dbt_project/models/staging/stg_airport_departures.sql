@@ -64,6 +64,12 @@ filtered AS (
         arrival_gate,
         arrival_baggagebelt AS arrival_baggage_belt,
 
+        --flags
+        CASE WHEN departure_revisedtime_utc IS NULL THEN 1 ELSE 0 END as is_missing_revised_time,
+        CASE WHEN departure_runwaytime_utc IS NULL THEN 1 ELSE 0 END as is_missing_runway_time,
+        CASE WHEN callSign IS NULL THEN 1 ELSE 0 END as is_missing_callsign,
+        CASE WHEN aircraft_modeS IS NULL THEN 1 ELSE 0 END as is_missing_aircraft_mode_s,
+
         ingestion_timestamp,
         data_source
     FROM
@@ -75,15 +81,44 @@ filtered AS (
             OR (callSign IS NOT NULL AND aircraft_modeS IS NOT NULL)
         )
 ),
-deduplicated AS (
-    SELECT
+latest_records AS (
+    -- keeping the latest record per full flight identity
+    SELECT 
         *
-    FROM
-        filtered
-    qualify row_number() over (
-        partition by flight_number, flight_date, airport_icao, departure_scheduled_utc, arrival_airport_icao, arrival_scheduled_utc
-        order by ingestion_timestamp desc
-    ) = 1 
+    FROM filtered
+    QUALIFY ROW_NUMBER() OVER (
+        PARTITION BY 
+            flight_number,
+            flight_date,
+            airport_icao,
+            departure_scheduled_utc,
+            arrival_airport_icao,
+            arrival_scheduled_utc
+        ORDER BY ingestion_timestamp DESC
+    ) = 1
+),
+
+final_dedup AS (
+    -- dedupe further using aircraft + callsign identifiers
+    SELECT *
+    FROM latest_records
+    QUALIFY ROW_NUMBER() OVER (
+        PARTITION BY 
+            flight_number,
+            flight_date,
+            callsign,
+            aircraft_mode_s,
+            airport_icao
+        ORDER BY 
+            -- Push records with BOTH nulls to end (so they are dropped)
+            CASE 
+                WHEN departure_revised_utc IS NULL 
+                 AND arrival_scheduled_utc IS NULL 
+                THEN 1 ELSE 0 
+            END,
+            -- If both options valid, keep earliest scheduled departure
+            departure_scheduled_utc
+    ) = 1
 )
 
-SELECT * FROM deduplicated
+SELECT * FROM final_dedup
