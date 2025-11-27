@@ -1,0 +1,35 @@
+version: 2
+
+models:
+  - name: stg_arrivals_unlinkable
+    description: Staging model for airport arrival operating records. 
+    columns:
+      - name: flight_number
+        description: "Flight number reported for the arrival."
+        tests:
+          - not_null
+
+      - name: flight_date
+        description: "Flight operational date."
+        tests:
+          - not_null
+      
+      - name: airport_icao
+        description: "ICAO code of the departure airport."
+        tests:
+          - not_null
+          
+      - name: arrival_scheduled_utc
+        description: "Time of the arrival"
+        tests:
+          - not_null
+      
+      - name: codeshare_status
+        tests: 
+          - accepted_values:
+              values: ['IsOperator']
+
+    data_tests:
+      - only_both_null:
+          column_1: callsign
+          column_2: aircraft_mode_s

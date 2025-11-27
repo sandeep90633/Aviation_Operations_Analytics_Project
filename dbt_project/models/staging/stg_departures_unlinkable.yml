@@ -1,7 +1,7 @@
 version: 2
 
 models:
-  - name: stg_departures_operator
+  - name: stg_departures_unlinkable
     description: Staging model for airport departure operating records. 
     columns:
       - name: flight_number
@@ -25,10 +25,9 @@ models:
           - not_null
       
       - name: codeshare_status
-        data_tests:
+        tests: 
           - accepted_values:
-              arguments:
-                values: ['IsOperator']
+              values: ['IsOperator']
 
     data_tests:
       - only_both_null:

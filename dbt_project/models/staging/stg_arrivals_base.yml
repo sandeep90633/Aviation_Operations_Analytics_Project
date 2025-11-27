@@ -1,7 +1,7 @@
 version: 2
 
 models:
-  - name: stg_airport_arrivals
+  - name: stg_arrivals_base
     description: Staging model for airport arrival records. 
     columns:
       - name: flight_number
