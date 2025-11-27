@@ -1,0 +1,36 @@
+version: 2
+
+models:
+  - name: stg_departures_operator
+    description: Staging model for airport departure operating records. 
+    columns:
+      - name: flight_number
+        description: "Flight number reported for the departure."
+        tests:
+          - not_null
+
+      - name: flight_date
+        description: "Flight operational date."
+        tests:
+          - not_null
+      
+      - name: airport_icao
+        description: "ICAO code of the departure airport."
+        tests:
+          - not_null
+          
+      - name: departure_scheduled_utc
+        description: "Time of the departure"
+        tests:
+          - not_null
+      
+      - name: codeshare_status
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['IsOperator']
+
+    data_tests:
+      - only_both_null:
+          column_1: callsign
+          column_2: aircraft_mode_s
