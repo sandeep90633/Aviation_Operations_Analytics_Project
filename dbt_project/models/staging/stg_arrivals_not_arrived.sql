@@ -1,3 +1,4 @@
+
 {{ config(
     materialized = "view"
 ) }}
@@ -9,9 +10,8 @@ WITH base as (
     FROM
         {{ ref('stg_arrivals_base') }}
     WHERE
-        codeshare_status = 'IsOperator' and
-        status = 'Arrived' and 
-        (callsign IS NULL and aircraft_mode_s IS NULL)
+        codeshare_status = 'IsOperator' and 
+        status NOT IN ('Arrived', 'Approaching', 'Delayed')
 )
 SELECT
     *

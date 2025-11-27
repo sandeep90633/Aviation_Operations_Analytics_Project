@@ -24,6 +24,11 @@ models:
         tests:
           - not_null
       
+      - name: status
+        tests: 
+          - accepted_values:
+              values: ['Departed']
+      
       - name: codeshare_status
         tests: 
           - accepted_values:

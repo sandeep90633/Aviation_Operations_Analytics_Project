@@ -9,7 +9,8 @@ WITH base as (
     FROM
         {{ ref('stg_departures_base') }}
     WHERE
-        codeshare_status = 'IsOperator' and
+        codeshare_status = 'IsOperator' and 
+        status = 'Departed' and 
         (callsign IS NULL and aircraft_mode_s IS NULL)
 )
 SELECT

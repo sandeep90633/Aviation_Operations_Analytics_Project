@@ -1,8 +1,8 @@
 version: 2
 
 models:
-  - name: stg_departures_unlinkable
-    description: Staging model for airport departure operating records. 
+  - name: stg_departures_not_departed
+    description: Staging model for airport not departed records. 
     columns:
       - name: flight_number
         description: "Flight number reported for the departure."
@@ -18,23 +18,13 @@ models:
         description: "ICAO code of the departure airport."
         tests:
           - not_null
-          
-      - name: departure_scheduled_utc
-        description: "Time of the departure"
-        tests:
-          - not_null
       
       - name: status
         tests: 
-          - accepted_values:
+          - dbt_utils.not_accepted_values:
               values: ['Departed']
-
+      
       - name: codeshare_status
         tests: 
           - accepted_values:
               values: ['IsOperator']
-
-    data_tests:
-      - only_both_null:
-          column_1: callsign
-          column_2: aircraft_mode_s

@@ -23,6 +23,11 @@ models:
         description: "Time of the arrival"
         tests:
           - not_null
+
+      - name: status
+        tests: 
+          - accepted_values:
+              values: ['Arrived']
       
       - name: codeshare_status
         tests: 
