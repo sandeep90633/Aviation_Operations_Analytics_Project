@@ -8,8 +8,7 @@ WITH source AS (
     FROM
         {{source('raw_layer', 'airport_departures')}}
 ),
--- Exclude records where iscargo = TRUE.
--- If status = 'IsOperator', then both callsign and aircraft_modes must be NOT NULL.
+-- Exclude records where iscargo = TRUE
 filtered AS (
     SELECT
         -- Core Flight Identifiers
@@ -71,6 +70,8 @@ latest_records AS (
         PARTITION BY 
             flight_number,
             flight_date,
+            callsign,
+            aircraft_mode_s,
             airport_icao,
             departure_scheduled_utc,
             arrival_airport_icao,
@@ -91,14 +92,15 @@ final_dedup AS (
             aircraft_mode_s,
             airport_icao
         ORDER BY 
-            -- Push records with BOTH nulls to end (so they are dropped)
+            -- Push records with null to end (so they are dropped)
             CASE 
-                WHEN departure_revised_utc IS NULL 
-                 AND arrival_scheduled_utc IS NULL 
-                THEN 1 ELSE 0 
-            END,
-            -- If both options valid, keep earliest scheduled departure
-            departure_scheduled_utc
+                WHEN departure_revised_utc IS NULL THEN 1
+                WHEN departure_runway_utc IS NOT NULL THEN 1
+                WHEN arrival_scheduled_utc IS NULL THEN 1
+                WHEN arrival_revised_utc IS NULL THEN 1
+                WHEN arrival_runway_utc IS NULL THEN 1
+                ELSE 0
+            END
     ) = 1
 )
 
