@@ -8,6 +8,7 @@ WITH base AS (
         status = 'Departed'
         AND codeshare_status = 'IsOperator'
         AND (callsign IS NOT NULL OR aircraft_mode_s IS NOT NULL)
+        AND (DATE(departure_revised_utc) = flight_date OR DATE(departure_revised_utc) IS NULL )
 ),
 
 -- Assign row numbers by scheduling time so we can pick the best two rows per group
@@ -66,7 +67,7 @@ merged AS (
         p.airport_icao,
 
         -- Departure times (merged)
-        p.departure_scheduled_utc,
+        COALESCE(p.departure_scheduled_utc, s.departure_scheduled_utc) AS departure_scheduled_utc,
         COALESCE(p.departure_revised_utc, s.departure_revised_utc) AS departure_revised_utc,
         COALESCE(p.departure_runway_utc, s.departure_runway_utc) AS departure_runway_utc,
 
