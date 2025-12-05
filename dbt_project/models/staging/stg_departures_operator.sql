@@ -8,7 +8,6 @@ WITH base AS (
         status = 'Departed'
         AND codeshare_status = 'IsOperator'
         AND (callsign IS NOT NULL OR aircraft_mode_s IS NOT NULL)
-        AND (DATE(departure_revised_utc) = flight_date OR DATE(departure_revised_utc) IS NULL )
 ),
 
 -- Assign row numbers by scheduling time so we can pick the best two rows per group

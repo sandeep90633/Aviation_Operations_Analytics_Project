@@ -8,7 +8,7 @@ WITH source AS (
     FROM
         {{source('raw_layer', 'airport_departures')}}
 ),
--- Exclude records where iscargo = TRUE
+-- Exclude records where iscargo = TRUE and has scheduled date not flight_date
 filtered AS (
     SELECT
         -- Core Flight Identifiers
@@ -60,6 +60,7 @@ filtered AS (
         source
     WHERE 
         isCargo = FALSE
+        AND DATE(departure_scheduledtime_utc) = flight_date
 ),
 latest_records AS (
     -- keeping the latest record per full flight identity

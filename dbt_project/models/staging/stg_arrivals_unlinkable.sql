@@ -10,7 +10,7 @@ WITH base as (
         {{ ref('stg_arrivals_base') }}
     WHERE
         codeshare_status = 'IsOperator' and
-        status = 'Arrived' and 
+        status IN ('Arrived','Approaching','Delayed') and 
         (callsign IS NULL and aircraft_mode_s IS NULL)
 )
 SELECT

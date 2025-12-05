@@ -12,7 +12,6 @@ WITH base AS (
     WHERE status IN ('Arrived','Approaching','Delayed')
       AND (callsign IS NOT NULL OR aircraft_mode_s IS NOT NULL)
       AND codeshare_status = 'IsOperator'
-      AND (DATE(arrival_revised_utc) = flight_date OR DATE(arrival_revised_utc) IS NULL)
 ),
 
 ranked AS (

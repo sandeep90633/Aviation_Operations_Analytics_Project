@@ -27,7 +27,7 @@ models:
       - name: status
         tests: 
           - accepted_values:
-              values: ['Arrived']
+              values: ['Arrived', 'Approaching', 'Delayed']
       
       - name: codeshare_status
         tests: 
